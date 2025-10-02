@@ -69,70 +69,71 @@ class PersonalRecruiter {
     }
   }
 
-  async onMessage(request, sender, sendResponse) {
+  onMessage(request, sender, sendResponse) {
     console.log('Background received message:', request);
     
-    // Handle async responses properly
-    (async () => {
+    // Handle async responses with proper promise chain
+    const handleAsync = async () => {
       try {
         switch (request.action || request.type) {
           case 'ping':
             console.log('Ping received, sending pong');
-            sendResponse({ success: true, message: 'pong', timestamp: Date.now() });
-            break;
+            return { success: true, message: 'pong', timestamp: Date.now() };
             
           case 'authenticate':
             const result = await this.authenticate();
-            sendResponse({ success: true, user: result });
-            break;
+            return { success: true, user: result };
             
           case 'logout':
             await this.logout();
-            sendResponse({ success: true });
-            break;
+            return { success: true };
             
           case 'saveJobApplication':
             console.log('Processing saveJobApplication request');
             const saveResult = await this.saveJobApplication(request.data);
-            sendResponse({ success: true, data: saveResult });
-            break;
+            return { success: true, data: saveResult };
             
           case 'JOB_DETECTED':
             console.log('Job detected from content script:', request.data);
-            // Store the detected job info for potential tracking
             await this.storeDetectedJob(request.data);
-            sendResponse({ success: true });
-            break;
+            return { success: true };
             
           case 'getJobApplications':
             console.log('Processing getJobApplications request');
             const jobApplications = await this.getJobApplications();
-            sendResponse({ success: true, data: jobApplications });
-            break;
+            return { success: true, data: jobApplications };
             
           case 'exportToCSV':
             const csvData = await this.exportToCSV();
-            sendResponse({ success: true, data: csvData });
-            break;
+            return { success: true, data: csvData };
             
           case 'deleteApplication':
             await this.deleteApplication(request.id);
-            sendResponse({ success: true });
-            break;
+            return { success: true };
             
           case 'getAuthStatus':
             const authStatus = await this.getAuthStatus();
-            sendResponse({ success: true, data: authStatus });
-            break;
+            return { success: true, data: authStatus };
             
           default:
-            sendResponse({ success: false, error: 'Unknown action' });
+            return { success: false, error: 'Unknown action' };
         }
       } catch (error) {
         console.error('Background script error:', error);
-        sendResponse({ success: false, error: error.message });
+        return { success: false, error: error.message };
       }
-    })();
+    };
+    
+    // Execute async handler and send response
+    handleAsync()
+      .then(response => {
+        console.log('Sending response:', response);
+        sendResponse(response);
+      })
+      .catch(error => {
+        console.error('Handler error:', error);
+        sendResponse({ success: false, error: error.message });
+      });
     
     return true; // Keep message channel open for async response
   }
@@ -338,13 +339,19 @@ class PersonalRecruiter {
           } else {
             console.log('Job application saved successfully. Total applications:', jobApplications.length);
             
-            // Show notification
-            chrome.notifications.create({
-              type: 'basic',
-              iconUrl: 'icons/icon48.png',
-              title: 'Job Application Saved',
-              message: `Application for "${applicationData.jobTitle}" has been tracked.`
-            });
+            // Show notification (with error handling)
+            try {
+              if (chrome.notifications && chrome.notifications.create) {
+                chrome.notifications.create({
+                  type: 'basic',
+                  iconUrl: 'icons/icon48.png',
+                  title: 'Job Application Saved',
+                  message: `Application for "${applicationData.jobTitle}" has been tracked.`
+                });
+              }
+            } catch (notificationError) {
+              console.log('Notification failed (non-critical):', notificationError);
+            }
             
             resolve(newApplication);
           }
