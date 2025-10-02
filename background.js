@@ -70,8 +70,10 @@ class PersonalRecruiter {
   }
 
   async onMessage(request, sender, sendResponse) {
+    console.log('Background received message:', request);
+    
     try {
-      switch (request.action) {
+      switch (request.action || request.type) {
         case 'authenticate':
           const result = await this.authenticate();
           sendResponse({ success: true, user: result });
@@ -83,13 +85,22 @@ class PersonalRecruiter {
           break;
           
         case 'saveJobApplication':
-          await this.saveJobApplication(request.data);
+          console.log('Processing saveJobApplication request');
+          const saveResult = await this.saveJobApplication(request.data);
+          sendResponse({ success: true, data: saveResult });
+          break;
+          
+        case 'JOB_DETECTED':
+          console.log('Job detected from content script:', request.data);
+          // Store the detected job info for potential tracking
+          await this.storeDetectedJob(request.data);
           sendResponse({ success: true });
           break;
           
         case 'getJobApplications':
-          const applications = await this.getJobApplications();
-          sendResponse({ success: true, data: applications });
+          console.log('Processing getJobApplications request');
+          const jobApplications = await this.getJobApplications();
+          sendResponse({ success: true, data: jobApplications });
           break;
           
         case 'exportToCSV':
@@ -292,30 +303,75 @@ class PersonalRecruiter {
   }
 
   async saveJobApplication(applicationData) {
-    const { jobApplications = [] } = await chrome.storage.sync.get(['jobApplications']);
+    console.log('Saving job application:', applicationData);
     
-    const newApplication = {
-      id: Date.now().toString(),
-      timestamp: new Date().toISOString(),
-      ...applicationData
-    };
+    return new Promise((resolve, reject) => {
+      chrome.storage.sync.get(['jobApplications'], (result) => {
+        if (chrome.runtime.lastError) {
+          console.error('Storage get error:', chrome.runtime.lastError);
+          reject(chrome.runtime.lastError);
+          return;
+        }
+        
+        const jobApplications = result.jobApplications || [];
+        
+        const newApplication = {
+          id: Date.now().toString(),
+          timestamp: new Date().toISOString(),
+          ...applicationData
+        };
+        
+        jobApplications.push(newApplication);
+        
+        chrome.storage.sync.set({ jobApplications }, () => {
+          if (chrome.runtime.lastError) {
+            console.error('Storage set error:', chrome.runtime.lastError);
+            reject(chrome.runtime.lastError);
+          } else {
+            console.log('Job application saved successfully. Total applications:', jobApplications.length);
+            
+            // Show notification
+            chrome.notifications.create({
+              type: 'basic',
+              iconUrl: 'icons/icon48.png',
+              title: 'Job Application Saved',
+              message: `Application for "${applicationData.jobTitle}" has been tracked.`
+            });
+            
+            resolve(newApplication);
+          }
+        });
+      });
+    });
+  }
+
+  async storeDetectedJob(jobData) {
+    console.log('Storing detected job for potential tracking:', jobData);
     
-    jobApplications.push(newApplication);
-    
-    await chrome.storage.sync.set({ jobApplications });
-    
-    // Show notification
-    chrome.notifications.create({
-      type: 'basic',
-      iconUrl: 'icons/icon48.png',
-      title: 'Job Application Saved',
-      message: `Application for "${applicationData.jobTitle}" has been tracked.`
+    // Store the detected job temporarily for user to potentially save
+    await chrome.storage.local.set({ 
+      lastDetectedJob: {
+        ...jobData,
+        detectedAt: new Date().toISOString()
+      }
     });
   }
 
   async getJobApplications() {
-    const { jobApplications = [] } = await chrome.storage.sync.get(['jobApplications']);
-    return jobApplications.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    console.log('Getting job applications from storage...');
+    return new Promise((resolve) => {
+      chrome.storage.sync.get(['jobApplications'], (result) => {
+        if (chrome.runtime.lastError) {
+          console.error('Storage get error:', chrome.runtime.lastError);
+          resolve([]);
+        } else {
+          const applications = result.jobApplications || [];
+          console.log('Retrieved applications:', applications.length);
+          const sorted = applications.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+          resolve(sorted);
+        }
+      });
+    });
   }
 
   async deleteApplication(id) {

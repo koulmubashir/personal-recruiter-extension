@@ -264,16 +264,27 @@ class PopupController {
   }
 
   async loadApplications() {
+    console.log('Loading applications...');
     try {
       const response = await this.sendMessage({ action: 'getJobApplications' });
+      console.log('Applications response:', response);
       
       if (response.success) {
-        this.applications = response.data;
+        this.applications = response.data || [];
+        console.log('Loaded applications count:', this.applications.length);
+        this.updateStats();
+        this.updateRecentApplications();
+      } else {
+        console.error('Failed to load applications - response not successful:', response);
+        this.applications = [];
         this.updateStats();
         this.updateRecentApplications();
       }
     } catch (error) {
       console.error('Failed to load applications:', error);
+      this.applications = [];
+      this.updateStats();
+      this.updateRecentApplications();
     }
   }
 
@@ -353,8 +364,17 @@ class PopupController {
 
   async saveManualApplication(e) {
     e.preventDefault();
+    console.log('=== SAVE MANUAL APPLICATION START ===');
+    console.log('Form event:', e);
+    console.log('Form element:', this.manualAddForm);
     
+    // Debug form data extraction
     const formData = new FormData(this.manualAddForm);
+    console.log('FormData entries:');
+    for (let [key, value] of formData.entries()) {
+      console.log(`  ${key}: ${value}`);
+    }
+    
     const applicationData = {
       jobTitle: formData.get('jobTitle') || document.getElementById('jobTitle').value,
       company: formData.get('company') || document.getElementById('company').value,
@@ -365,22 +385,38 @@ class PopupController {
       manual: true
     };
     
+    console.log('Application data to save:', applicationData);
+    
+    // Validate required fields
+    if (!applicationData.jobTitle || !applicationData.company) {
+      this.showError('Job title and company are required');
+      return;
+    }
+    
     try {
+      console.log('Sending message to background script...');
       const response = await this.sendMessage({
         action: 'saveJobApplication',
         data: applicationData
       });
       
-      if (response.success) {
+      console.log('Background response:', response);
+      
+      if (response && response.success) {
+        console.log('✅ Save successful!');
         this.hideManualAddModal();
+        this.showSuccessMessage('Application saved successfully!');
         await this.loadApplications();
       } else {
-        this.showError('Failed to save application.');
+        console.error('❌ Save failed - response:', response);
+        this.showError('Failed to save application: ' + (response?.error || 'Unknown error'));
       }
     } catch (error) {
-      console.error('Failed to save manual application:', error);
-      this.showError('Failed to save application.');
+      console.error('❌ Save error:', error);
+      this.showError('Failed to save application: ' + error.message);
     }
+    
+    console.log('=== SAVE MANUAL APPLICATION END ===');
   }
 
   openHistoryPage() {
@@ -540,10 +576,57 @@ class PopupController {
       });
     });
   }
+
+  // Debug method for testing storage directly
+  async debugStorage() {
+    console.log('=== STORAGE DEBUG ===');
+    
+    // Test 1: Direct storage access
+    chrome.storage.sync.get(null, (data) => {
+      console.log('📦 All storage data:', data);
+      console.log('📊 Applications count:', (data.jobApplications || []).length);
+    });
+    
+    // Test 2: Test save directly to storage
+    const testApp = {
+      id: 'debug-' + Date.now(),
+      timestamp: new Date().toISOString(),
+      jobTitle: 'Debug Test Job',
+      company: 'Debug Company',
+      url: 'https://debug.com',
+      manual: true
+    };
+    
+    chrome.storage.sync.get(['jobApplications'], (result) => {
+      const apps = result.jobApplications || [];
+      apps.push(testApp);
+      
+      chrome.storage.sync.set({ jobApplications: apps }, () => {
+        if (chrome.runtime.lastError) {
+          console.error('❌ Direct storage save failed:', chrome.runtime.lastError);
+        } else {
+          console.log('✅ Direct storage save successful');
+          console.log('💾 Saved app:', testApp);
+        }
+      });
+    });
+    
+    console.log('=== STORAGE DEBUG END ===');
+  }
 }
+
+// Make debugStorage available globally for console testing
+window.debugPopupStorage = () => {
+  if (window.popupController) {
+    window.popupController.debugStorage();
+  } else {
+    console.error('Popup controller not initialized');
+  }
+};
 
 // Initialize popup controller when DOM is loaded
 let popupController;
 document.addEventListener('DOMContentLoaded', () => {
   popupController = new PopupController();
+  window.popupController = popupController; // Make globally accessible for debugging
 });

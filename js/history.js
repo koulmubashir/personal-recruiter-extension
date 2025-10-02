@@ -97,23 +97,29 @@ class HistoryController {
   }
 
   async loadApplications() {
+    console.log('=== HISTORY: Loading applications ===');
     this.showLoading();
     
     try {
+      console.log('Sending getJobApplications message...');
       const response = await this.sendMessage({ action: 'getJobApplications' });
+      console.log('History page response:', response);
       
-      if (response.success) {
-        this.applications = response.data;
+      if (response && response.success) {
+        this.applications = response.data || [];
+        console.log('✅ Loaded applications:', this.applications.length);
         this.applyFilters();
         this.updateStats();
       } else {
-        this.showError('Failed to load applications');
+        console.error('❌ Failed to load applications - response:', response);
+        this.showError('Failed to load applications: ' + (response?.error || 'No response'));
       }
     } catch (error) {
-      console.error('Failed to load applications:', error);
-      this.showError('Failed to load applications');
+      console.error('❌ Load applications error:', error);
+      this.showError('Failed to load applications: ' + error.message);
     } finally {
       this.hideLoading();
+      console.log('=== HISTORY: Load complete ===');
     }
   }
 
