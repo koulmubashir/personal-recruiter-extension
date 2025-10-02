@@ -17,15 +17,23 @@
   ],
   "oauth2": {
     "client_id": "728714090261-hqhfnujmbl8s2cgbr65cqard6lnfksub.apps.googleusercontent.com",
-    "scopes": ["openid", "email", "profile"]
+    "scopes": [
+      "openid",
+      "email",
+      "profile"
+    ]
   },
   "background": {
     "service_worker": "background.js"
   },
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
-      "js": ["content.js"],
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "content.js"
+      ],
       "run_at": "document_idle"
     }
   ],
@@ -50,8 +58,8 @@
   "web_accessible_resources": [
     {
       "resources": [
-        "popup.html", 
-        "history.html", 
+        "popup.html",
+        "history.html",
         "chrome-test.html",
         "extension-test.html",
         "oauth-setup-helper.html",
@@ -60,7 +68,9 @@
         "test-suite.html",
         "GOOGLE_OAUTH_SETUP.md"
       ],
-      "matches": ["<all_urls>"]
+      "matches": [
+        "<all_urls>"
+      ]
     }
   ]
 }
