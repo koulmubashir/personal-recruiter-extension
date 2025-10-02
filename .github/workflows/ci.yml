@@ -1,0 +1,106 @@
+name: Chrome Extension CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Validate extension files
+      run: npm run validate
+    
+    - name: Check manifest syntax
+      run: |
+        node -e "
+          const manifest = require('./manifest.json');
+          console.log('✅ Manifest is valid JSON');
+          console.log('Extension name:', manifest.name);
+          console.log('Version:', manifest.version);
+          console.log('Permissions:', manifest.permissions.length);
+        "
+    
+    - name: Verify required files exist
+      run: |
+        files=(
+          "manifest.json"
+          "background.js"
+          "content.js"
+          "popup.html"
+          "history.html"
+          "js/popup.js"
+          "js/history.js"
+          "css/popup.css"
+          "css/history.css"
+          "icons/icon16.png"
+          "icons/icon48.png"
+          "icons/icon128.png"
+        )
+        
+        for file in "${files[@]}"; do
+          if [ -f "$file" ]; then
+            echo "✅ $file exists"
+          else
+            echo "❌ $file is missing"
+            exit 1
+          fi
+        done
+    
+    - name: Check for sensitive data
+      run: |
+        if grep -r "client_secret\|private_key\|password" . --exclude-dir=node_modules --exclude-dir=.git --exclude="*.md" --exclude="*.yml"; then
+          echo "❌ Potential sensitive data found"
+          exit 1
+        else
+          echo "✅ No sensitive data detected"
+        fi
+
+  build:
+    runs-on: ubuntu-latest
+    needs: validate
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Use Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18.x'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Create extension package
+      run: |
+        mkdir -p build
+        cp -r . build/extension
+        cd build/extension
+        rm -rf node_modules .git .github
+        zip -r ../personal-recruiter-extension.zip . -x "*.DS_Store" "node_modules/*" ".git/*"
+    
+    - name: Upload extension package
+      uses: actions/upload-artifact@v3
+      with:
+        name: extension-package
+        path: build/personal-recruiter-extension.zip
+        retention-days: 30
