@@ -363,8 +363,12 @@ class JobDetector {
   }
 
   showJobDetectionIndicator() {
+    console.log('=== SHOWING JOB DETECTION INDICATOR ===');
+    console.log('Creating inline indicator (NOT a system notification)');
+    
     // Create a subtle indicator that the job was detected
     const indicator = document.createElement('div');
+    indicator.id = 'personal-recruiter-indicator';
     indicator.innerHTML = `
       <div style="
         position: fixed;
@@ -378,16 +382,22 @@ class JobDetector {
         z-index: 10000;
         box-shadow: 0 2px 8px rgba(0,0,0,0.2);
         opacity: 0.9;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        pointer-events: none;
       ">
         📋 Job detected by Personal Recruiter
       </div>
     `;
     
     document.body.appendChild(indicator);
+    console.log('✅ Inline indicator added to page');
     
     // Remove after 3 seconds
     setTimeout(() => {
-      indicator.remove();
+      if (indicator && indicator.parentElement) {
+        indicator.remove();
+        console.log('✅ Inline indicator removed');
+      }
     }, 3000);
   }
 

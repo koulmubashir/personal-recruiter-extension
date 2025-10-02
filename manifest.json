@@ -10,7 +10,6 @@
     "history",
     "identity",
     "scripting",
-    "notifications",
     "sidePanel"
   ],
   "host_permissions": [

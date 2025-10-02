@@ -411,21 +411,6 @@ class PersonalRecruiter {
             reject(chrome.runtime.lastError);
           } else {
             console.log('Job application saved successfully. Total applications:', jobApplications.length);
-            
-            // Show notification (with error handling)
-            try {
-              if (chrome.notifications && chrome.notifications.create) {
-                chrome.notifications.create({
-                  type: 'basic',
-                  iconUrl: 'icons/icon48.png',
-                  title: 'Job Application Saved',
-                  message: `Application for "${applicationData.jobTitle}" has been tracked.`
-                });
-              }
-            } catch (notificationError) {
-              console.log('Notification failed (non-critical):', notificationError);
-            }
-            
             resolve(newApplication);
           }
         });
