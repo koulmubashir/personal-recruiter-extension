@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Side Panel</title>
+    <style>
+        body {
+            width: 300px;
+            height: 400px;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+        .debug-info {
+            background: #f0f0f0;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px;
+            margin: 5px 0;
+            width: 100%;
+            background: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h2>🎉 Side Panel Works!</h2>
+    <div class="debug-info">
+        <strong>Status:</strong> Extension loaded successfully
+    </div>
+    <div class="debug-info">
+        <strong>Time:</strong> <span id="currentTime"></span>
+    </div>
+    <div class="debug-info">
+        <strong>URL:</strong> <span id="currentUrl">Loading...</span>
+    </div>
+    
+    <button onclick="testMessage()">Test Background Communication</button>
+    <button onclick="openFullSidePanel()">Open Full Side Panel</button>
+    
+    <div id="testResult" class="debug-info" style="display:none;">
+        <strong>Test Result:</strong> <span id="resultText"></span>
+    </div>
+
+    <script>
+        // Update current time
+        function updateTime() {
+            document.getElementById('currentTime').textContent = new Date().toLocaleTimeString();
+        }
+        updateTime();
+        setInterval(updateTime, 1000);
+
+        // Get current tab URL
+        chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+            document.getElementById('currentUrl').textContent = tabs[0].url.substring(0, 50) + '...';
+        });
+
+        // Test background communication
+        function testMessage() {
+            console.log('Testing background communication...');
+            chrome.runtime.sendMessage({action: 'ping'}, function(response) {
+                const resultDiv = document.getElementById('testResult');
+                const resultText = document.getElementById('resultText');
+                
+                if (chrome.runtime.lastError) {
+                    resultText.textContent = 'Error: ' + chrome.runtime.lastError.message;
+                } else if (response) {
+                    resultText.textContent = 'Success: ' + JSON.stringify(response);
+                } else {
+                    resultText.textContent = 'No response from background';
+                }
+                
+                resultDiv.style.display = 'block';
+            });
+        }
+
+        // Open full side panel
+        function openFullSidePanel() {
+            window.location.href = 'sidepanel.html';
+        }
+
+        console.log('Debug side panel loaded');
+    </script>
+</body>
+</html>

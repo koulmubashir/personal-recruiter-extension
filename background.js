@@ -38,24 +38,63 @@ class PersonalRecruiter {
   }
 
   init() {
+    console.log('=== Personal Recruiter Background Script Initializing ===');
+    
     // Set up listeners
     chrome.runtime.onInstalled.addListener(() => this.onInstalled());
     chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => this.onTabUpdated(tabId, changeInfo, tab));
     chrome.runtime.onMessage.addListener((request, sender, sendResponse) => this.onMessage(request, sender, sendResponse));
-    chrome.action.onClicked.addListener(() => this.onActionClick());
+    
+    // Check if sidePanel is available and configure accordingly
+    if (chrome.sidePanel) {
+      console.log('✅ SidePanel API available - disabling popup and using side panel');
+      // Disable popup and use side panel
+      chrome.action.setPopup({ popup: '' });
+      chrome.action.onClicked.addListener(() => this.onActionClick());
+    } else {
+      console.log('⚠️ SidePanel API not available - using popup fallback');
+      // Keep popup as fallback
+    }
+    
+    console.log('✅ Event listeners set up');
+    console.log('Chrome version info:', navigator.userAgent);
     
     // Check authentication status on startup
     this.checkAuthStatus();
   }
 
   async onActionClick() {
-    // Open the side panel
+    console.log('=== Extension icon clicked ===');
+    
+    // Try to open the side panel first
     try {
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      await chrome.sidePanel.open({ tabId: tab.id });
+      console.log('Attempting to open side panel...');
+      
+      // Check if sidePanel API is available
+      if (chrome.sidePanel && chrome.sidePanel.open) {
+        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        console.log('Current tab:', tab.id);
+        await chrome.sidePanel.open({ tabId: tab.id });
+        console.log('✅ Side panel opened successfully');
+      } else {
+        console.log('❌ sidePanel API not available, falling back to popup');
+        this.openPopupFallback();
+      }
     } catch (error) {
-      console.error('Failed to open side panel:', error);
+      console.error('❌ Failed to open side panel:', error);
+      console.log('Falling back to popup...');
+      this.openPopupFallback();
     }
+  }
+
+  openPopupFallback() {
+    // Fallback: open popup in a new tab or window
+    console.log('Opening popup fallback...');
+    chrome.tabs.create({
+      url: chrome.runtime.getURL('sidepanel.html'),
+      width: 400,
+      height: 600
+    });
   }
 
   async onInstalled() {
