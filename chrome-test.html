@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chrome Side Panel Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 600px; }
+        .test-result { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { background: #e8f5e8; border: 1px solid #4caf50; }
+        .error { background: #ffebee; border: 1px solid #f44336; }
+        .warning { background: #fff3e0; border: 1px solid #ff9800; }
+        button { padding: 10px 20px; margin: 5px; background: #4285f4; color: white; border: none; border-radius: 4px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Chrome Side Panel API Test</h1>
+    
+    <div id="chromeVersion" class="test-result">
+        <strong>Chrome Version:</strong> <span id="versionText">Checking...</span>
+    </div>
+    
+    <div id="apiAvailability" class="test-result">
+        <strong>Side Panel API:</strong> <span id="apiText">Checking...</span>
+    </div>
+    
+    <div id="extensionContext" class="test-result">
+        <strong>Extension Context:</strong> <span id="contextText">Checking...</span>
+    </div>
+    
+    <h2>Manual Tests</h2>
+    <button onclick="testSidePanelOpen()">Test Side Panel Open</button>
+    <button onclick="testSetBehavior()">Test Set Panel Behavior</button>
+    <button onclick="testBackgroundMessage()">Test Background Message</button>
+    
+    <div id="testResults"></div>
+
+    <script>
+        // Check Chrome version
+        const userAgent = navigator.userAgent;
+        const chromeVersion = userAgent.match(/Chrome\/(\d+)/);
+        const versionNum = chromeVersion ? parseInt(chromeVersion[1]) : 0;
+        
+        document.getElementById('versionText').textContent = versionNum ? `${versionNum} (${versionNum >= 114 ? 'Side Panel Supported' : 'Too Old for Side Panel'})` : 'Not Chrome';
+        document.getElementById('chromeVersion').className = `test-result ${versionNum >= 114 ? 'success' : 'error'}`;
+        
+        // Check API availability
+        const hasSidePanel = !!(chrome && chrome.sidePanel);
+        document.getElementById('apiText').textContent = hasSidePanel ? 'Available ✅' : 'Not Available ❌';
+        document.getElementById('apiAvailability').className = `test-result ${hasSidePanel ? 'success' : 'error'}`;
+        
+        // Check extension context
+        const hasExtensionAPIs = !!(chrome && chrome.runtime && chrome.tabs);
+        document.getElementById('contextText').textContent = hasExtensionAPIs ? 'Extension Context ✅' : 'Not in Extension ❌';
+        document.getElementById('extensionContext').className = `test-result ${hasExtensionAPIs ? 'success' : 'error'}`;
+        
+        function addResult(message, isSuccess = true) {
+            const div = document.createElement('div');
+            div.className = `test-result ${isSuccess ? 'success' : 'error'}`;
+            div.innerHTML = `<strong>${new Date().toLocaleTimeString()}:</strong> ${message}`;
+            document.getElementById('testResults').appendChild(div);
+        }
+        
+        async function testSidePanelOpen() {
+            try {
+                if (!chrome.sidePanel) {
+                    addResult('Side Panel API not available', false);
+                    return;
+                }
+                
+                const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+                await chrome.sidePanel.open({ tabId: tab.id });
+                addResult('✅ Side panel opened successfully!');
+            } catch (error) {
+                addResult(`❌ Failed to open side panel: ${error.message}`, false);
+            }
+        }
+        
+        async function testSetBehavior() {
+            try {
+                if (!chrome.sidePanel || !chrome.sidePanel.setPanelBehavior) {
+                    addResult('setPanelBehavior API not available', false);
+                    return;
+                }
+                
+                await chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
+                addResult('✅ Panel behavior set successfully!');
+            } catch (error) {
+                addResult(`❌ Failed to set behavior: ${error.message}`, false);
+            }
+        }
+        
+        function testBackgroundMessage() {
+            chrome.runtime.sendMessage({ action: 'ping' }, (response) => {
+                if (chrome.runtime.lastError) {
+                    addResult(`❌ Background message failed: ${chrome.runtime.lastError.message}`, false);
+                } else {
+                    addResult(`✅ Background message success: ${JSON.stringify(response)}`);
+                }
+            });
+        }
+        
+        // Auto-run basic tests
+        setTimeout(() => {
+            addResult(`Chrome Version: ${versionNum}, Side Panel API: ${hasSidePanel ? 'Yes' : 'No'}`);
+        }, 100);
+    </script>
+</body>
+</html>

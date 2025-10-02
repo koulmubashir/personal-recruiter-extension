@@ -50,7 +50,7 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["popup.html", "history.html"],
+      "resources": ["popup.html", "history.html", "chrome-test.html"],
       "matches": ["<all_urls>"]
     }
   ]
