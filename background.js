@@ -42,9 +42,20 @@ class PersonalRecruiter {
     chrome.runtime.onInstalled.addListener(() => this.onInstalled());
     chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => this.onTabUpdated(tabId, changeInfo, tab));
     chrome.runtime.onMessage.addListener((request, sender, sendResponse) => this.onMessage(request, sender, sendResponse));
+    chrome.action.onClicked.addListener(() => this.onActionClick());
     
     // Check authentication status on startup
     this.checkAuthStatus();
+  }
+
+  async onActionClick() {
+    // Open the side panel
+    try {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      await chrome.sidePanel.open({ tabId: tab.id });
+    } catch (error) {
+      console.error('Failed to open side panel:', error);
+    }
   }
 
   async onInstalled() {

@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test History Page - Personal Recruiter</title>
+    <link rel="stylesheet" href="css/history.css">
+    <style>
+        .debug-panel {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background: #f0f0f0;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            z-index: 10001;
+        }
+    </style>
+</head>
+<body>
+    <div class="debug-panel">
+        <div>Debug Panel:</div>
+        <div id="debugInfo">Loading...</div>
+        <button onclick="testAddSampleData()">Add Sample Data</button>
+        <button onclick="testActionButtons()">Test Action Buttons</button>
+    </div>
+
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <span class="logo-icon">📋</span>
+                    <h1>Personal Recruiter - Application History (TEST MODE)</h1>
+                </div>
+                <div class="header-actions">
+                    <button id="exportBtn" class="btn primary">
+                        <span class="icon">📥</span>
+                        Export CSV
+                    </button>
+                    <button id="addApplicationBtn" class="btn secondary">
+                        <span class="icon">➕</span>
+                        Add Application
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Stats Section -->
+        <section class="stats-section">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">📊</div>
+                    <div class="stat-content">
+                        <div class="stat-number" id="totalCount">0</div>
+                        <div class="stat-label">Total Applications</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📅</div>
+                    <div class="stat-content">
+                        <div class="stat-number" id="thisMonthCount">0</div>
+                        <div class="stat-label">This Month</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📈</div>
+                    <div class="stat-content">
+                        <div class="stat-number" id="responseRate">0%</div>
+                        <div class="stat-label">Response Rate</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">💼</div>
+                    <div class="stat-content">
+                        <div class="stat-number" id="interviewCount">0</div>
+                        <div class="stat-label">Interviews</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Applications Table -->
+        <section class="applications-section">
+            <div class="table-container">
+                <table class="applications-table" id="applicationsTable">
+                    <thead>
+                        <tr>
+                            <th class="sortable" data-sort="timestamp">
+                                Date Applied 
+                                <span class="sort-icon">↕️</span>
+                            </th>
+                            <th class="sortable" data-sort="jobTitle">
+                                Job Title 
+                                <span class="sort-icon">↕️</span>
+                            </th>
+                            <th class="sortable" data-sort="company">
+                                Company 
+                                <span class="sort-icon">↕️</span>
+                            </th>
+                            <th class="sortable" data-sort="status">
+                                Status 
+                                <span class="sort-icon">↕️</span>
+                            </th>
+                            <th>Job ID</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="applicationsBody">
+                        <!-- Applications will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="no-results" id="noResults" style="display: none;">
+                <div class="no-results-content">
+                    <div class="no-results-icon">🔍</div>
+                    <h3>No applications found</h3>
+                    <p>Try adjusting your filters or add a new application.</p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Edit Application Modal -->
+    <div id="editModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Application</h3>
+                <span class="close" id="closeEditModal">&times;</span>
+            </div>
+            <form id="editForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editJobTitle">Job Title *</label>
+                        <input type="text" id="editJobTitle" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editCompany">Company *</label>
+                        <input type="text" id="editCompany" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editStatus">Status</label>
+                        <select id="editStatus">
+                            <option value="Applied">Applied</option>
+                            <option value="In Review">In Review</option>
+                            <option value="Interview Scheduled">Interview Scheduled</option>
+                            <option value="Rejected">Rejected</option>
+                            <option value="Offer Received">Offer Received</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="editJobId">Job ID</label>
+                        <input type="text" id="editJobId">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="editUrl">Job URL</label>
+                    <input type="url" id="editUrl">
+                </div>
+                <div class="form-group">
+                    <label for="editNotes">Notes</label>
+                    <textarea id="editNotes" rows="3"></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" id="cancelEdit" class="btn secondary">Cancel</button>
+                    <button type="submit" class="btn primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Mock Chrome APIs for testing
+        window.chrome = {
+            runtime: {
+                lastError: null,
+                sendMessage: (message, callback) => {
+                    console.log('Mock sendMessage:', message);
+                    setTimeout(() => {
+                        if (message.action === 'getJobApplications') {
+                            const sampleData = JSON.parse(localStorage.getItem('testApplications') || '[]');
+                            callback({ success: true, data: sampleData });
+                        } else if (message.action === 'deleteApplication') {
+                            let data = JSON.parse(localStorage.getItem('testApplications') || '[]');
+                            data = data.filter(app => app.id !== message.id);
+                            localStorage.setItem('testApplications', JSON.stringify(data));
+                            callback({ success: true });
+                        } else {
+                            callback({ success: false, error: 'Unknown action' });
+                        }
+                    }, 100);
+                }
+            },
+            storage: {
+                sync: {
+                    set: (data, callback) => {
+                        console.log('Mock storage set:', data);
+                        if (data.jobApplications) {
+                            localStorage.setItem('testApplications', JSON.stringify(data.jobApplications));
+                        }
+                        setTimeout(callback, 50);
+                    },
+                    get: (keys, callback) => {
+                        console.log('Mock storage get:', keys);
+                        const result = {};
+                        if (keys.includes('jobApplications')) {
+                            result.jobApplications = JSON.parse(localStorage.getItem('testApplications') || '[]');
+                        }
+                        setTimeout(() => callback(result), 50);
+                    }
+                }
+            }
+        };
+
+        function testAddSampleData() {
+            const sampleApplications = [
+                {
+                    id: '1',
+                    timestamp: new Date().toISOString(),
+                    jobTitle: 'Senior Software Engineer',
+                    company: 'Tech Corp',
+                    status: 'Applied',
+                    jobId: 'TC001',
+                    url: 'https://example.com/job1',
+                    notes: 'Applied via LinkedIn'
+                },
+                {
+                    id: '2',
+                    timestamp: new Date(Date.now() - 86400000).toISOString(),
+                    jobTitle: 'Frontend Developer',
+                    company: 'Web Solutions',
+                    status: 'In Review',
+                    jobId: 'WS002',
+                    url: 'https://example.com/job2',
+                    notes: 'Recruiter contacted'
+                }
+            ];
+            
+            localStorage.setItem('testApplications', JSON.stringify(sampleApplications));
+            if (window.historyController) {
+                window.historyController.loadApplications();
+            }
+            updateDebugInfo();
+        }
+
+        function testActionButtons() {
+            console.log('Testing action buttons...');
+            const buttons = document.querySelectorAll('.action-btn');
+            console.log('Found action buttons:', buttons.length);
+            buttons.forEach((btn, index) => {
+                console.log(`Button ${index}:`, btn.dataset.action, btn.dataset.id);
+            });
+        }
+
+        function updateDebugInfo() {
+            const data = JSON.parse(localStorage.getItem('testApplications') || '[]');
+            document.getElementById('debugInfo').innerHTML = `Applications: ${data.length}`;
+        }
+
+        // Update debug info every second
+        setInterval(updateDebugInfo, 1000);
+    </script>
+    <script src="js/history.js"></script>
+</body>
+</html>
