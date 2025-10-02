@@ -56,7 +56,9 @@
         "extension-test.html",
         "oauth-setup-helper.html",
         "test-auth.html",
-        "auth-toggle.html"
+        "auth-toggle.html",
+        "test-suite.html",
+        "GOOGLE_OAUTH_SETUP.md"
       ],
       "matches": ["<all_urls>"]
     }

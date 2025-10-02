@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Extension Functionality Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
+        .test-section { background: #f8f9fa; padding: 20px; margin: 20px 0; border-radius: 8px; border-left: 4px solid #007bff; }
+        .success { border-left-color: #28a745; background: #d4edda; }
+        .error { border-left-color: #dc3545; background: #f8d7da; }
+        .warning { border-left-color: #ffc107; background: #fff3cd; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; border: none; border-radius: 4px; }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-warning { background: #ffc107; color: black; }
+        .btn-danger { background: #dc3545; color: white; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 4px; overflow-x: auto; white-space: pre-wrap; }
+        .status { display: inline-block; padding: 4px 8px; border-radius: 4px; font-weight: bold; }
+        .status.pass { background: #28a745; color: white; }
+        .status.fail { background: #dc3545; color: white; }
+        .status.pending { background: #ffc107; color: black; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Personal Recruiter Extension - Full Test Suite</h1>
+    
+    <div class="test-section">
+        <h3>📊 Extension Status</h3>
+        <p><strong>Extension ID:</strong> <code id="extensionId">Loading...</code></p>
+        <p><strong>Current Mode:</strong> <span id="authMode">Checking...</span></p>
+        <p><strong>Background Script:</strong> <span class="status pending" id="backgroundStatus">Testing...</span></p>
+        <p><strong>Storage Access:</strong> <span class="status pending" id="storageStatus">Testing...</span></p>
+    </div>
+
+    <div class="test-section">
+        <h3>🔐 Authentication Tests</h3>
+        <button class="btn-primary" onclick="testAuthentication()">Test Authentication</button>
+        <button class="btn-warning" onclick="testAuthStatus()">Check Auth Status</button>
+        <button class="btn-danger" onclick="testLogout()">Test Logout</button>
+        <div id="authResults"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>📋 Data Management Tests</h3>
+        <button class="btn-primary" onclick="testApplicationsLoad()">Load Applications</button>
+        <button class="btn-success" onclick="addSampleData()">Add Sample Data</button>
+        <button class="btn-warning" onclick="testExport()">Test Export</button>
+        <button class="btn-danger" onclick="clearAllData()">Clear All Data</button>
+        <div id="dataResults"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>📄 Page Navigation Tests</h3>
+        <button class="btn-primary" onclick="openHistoryPage()">Open History Page</button>
+        <button class="btn-primary" onclick="openSidePanel()">Open Side Panel</button>
+        <button class="btn-success" onclick="testDateFormatting()">Test Date Formatting</button>
+        <div id="navigationResults"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>⚙️ Quick Actions</h3>
+        <button class="btn-warning" onclick="enableMockAuth()">Enable Mock Auth</button>
+        <button class="btn-success" onclick="openOAuthSetup()">OAuth Setup Guide</button>
+        <button class="btn-primary" onclick="reloadExtension()">Reload Extension</button>
+    </div>
+
+    <div class="test-section">
+        <h3>📊 Test Results</h3>
+        <pre id="testLog">Ready to run tests...\n\n</pre>
+    </div>
+
+    <script>
+        const log = (message, type = 'info') => {
+            const testLog = document.getElementById('testLog');
+            const timestamp = new Date().toLocaleTimeString();
+            const prefix = type === 'success' ? '✅' : type === 'error' ? '❌' : type === 'warning' ? '⚠️' : 'ℹ️';
+            testLog.textContent += `[${timestamp}] ${prefix} ${message}\n`;
+            console.log(message);
+            testLog.scrollTop = testLog.scrollHeight;
+        };
+
+        const updateStatus = (elementId, status, text) => {
+            const element = document.getElementById(elementId);
+            element.className = `status ${status}`;
+            element.textContent = text;
+        };
+
+        // Initialize tests
+        async function initializeTests() {
+            const extensionId = chrome.runtime.id;
+            document.getElementById('extensionId').textContent = extensionId;
+            log(`Extension ID: ${extensionId}`);
+
+            // Test background script
+            try {
+                const response = await chrome.runtime.sendMessage({ action: 'ping' });
+                if (response?.success) {
+                    updateStatus('backgroundStatus', 'pass', 'Working');
+                    log('Background script is responding', 'success');
+                } else {
+                    updateStatus('backgroundStatus', 'fail', 'Error');
+                    log('Background script not responding properly', 'error');
+                }
+            } catch (error) {
+                updateStatus('backgroundStatus', 'fail', 'Failed');
+                log(`Background script error: ${error.message}`, 'error');
+            }
+
+            // Test storage access
+            try {
+                await chrome.storage.sync.get(['test']);
+                updateStatus('storageStatus', 'pass', 'Working');
+                log('Storage access working', 'success');
+            } catch (error) {
+                updateStatus('storageStatus', 'fail', 'Failed');
+                log(`Storage access error: ${error.message}`, 'error');
+            }
+
+            // Check auth mode
+            try {
+                const response = await chrome.runtime.sendMessage({ action: 'getAuthStatus' });
+                if (response?.success) {
+                    const isAuth = response.data?.isAuthenticated;
+                    const user = response.data?.user;
+                    if (user?.email === 'test@example.com') {
+                        document.getElementById('authMode').textContent = 'Mock Authentication';
+                        log('Currently using mock authentication', 'warning');
+                    } else if (isAuth) {
+                        document.getElementById('authMode').textContent = 'Real Google OAuth';
+                        log('Currently using real Google OAuth', 'success');
+                    } else {
+                        document.getElementById('authMode').textContent = 'Not Authenticated';
+                        log('User not authenticated', 'warning');
+                    }
+                }
+            } catch (error) {
+                document.getElementById('authMode').textContent = 'Error';
+                log(`Auth mode check error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testAuthentication() {
+            log('Testing authentication...');
+            const resultsDiv = document.getElementById('authResults');
+            try {
+                const response = await chrome.runtime.sendMessage({ action: 'authenticate' });
+                if (response?.success) {
+                    const user = response.data;
+                    resultsDiv.innerHTML = `
+                        <div class="success">
+                            <h4>✅ Authentication Successful!</h4>
+                            <p><strong>Name:</strong> ${user.name}</p>
+                            <p><strong>Email:</strong> ${user.email}</p>
+                            <p><strong>Picture:</strong> ${user.picture ? 'Yes' : 'No'}</p>
+                        </div>
+                    `;
+                    log(`Authentication successful: ${user.name} (${user.email})`, 'success');
+                } else {
+                    resultsDiv.innerHTML = `<div class="error"><h4>❌ Authentication Failed</h4><p>${response?.error || 'Unknown error'}</p></div>`;
+                    log(`Authentication failed: ${response?.error || 'Unknown error'}`, 'error');
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="error"><h4>❌ Authentication Error</h4><p>${error.message}</p></div>`;
+                log(`Authentication error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testApplicationsLoad() {
+            log('Testing applications load...');
+            const resultsDiv = document.getElementById('dataResults');
+            try {
+                const response = await chrome.runtime.sendMessage({ action: 'getJobApplications' });
+                if (response?.success) {
+                    const apps = response.data || [];
+                    resultsDiv.innerHTML = `
+                        <div class="success">
+                            <h4>✅ Applications Loaded Successfully!</h4>
+                            <p><strong>Total Applications:</strong> ${apps.length}</p>
+                            <p><strong>Sample:</strong> ${apps.length > 0 ? apps[0].jobTitle || 'Unknown' : 'No applications'}</p>
+                        </div>
+                    `;
+                    log(`Loaded ${apps.length} applications`, 'success');
+                } else {
+                    resultsDiv.innerHTML = `<div class="error"><h4>❌ Load Failed</h4><p>${response?.error || 'Unknown error'}</p></div>`;
+                    log(`Applications load failed: ${response?.error || 'Unknown error'}`, 'error');
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="error"><h4>❌ Load Error</h4><p>${error.message}</p></div>`;
+                log(`Applications load error: ${error.message}`, 'error');
+            }
+        }
+
+        async function addSampleData() {
+            log('Adding sample data...');
+            const sampleApp = {
+                id: 'test-' + Date.now(),
+                jobTitle: 'Senior Frontend Developer',
+                company: 'Tech Corp',
+                url: 'https://example.com/job',
+                status: 'Applied',
+                timestamp: Date.now(),
+                jobId: 'TC-001',
+                manual: true
+            };
+
+            try {
+                const response = await chrome.runtime.sendMessage({ 
+                    action: 'saveJobApplication', 
+                    data: sampleApp 
+                });
+                if (response?.success) {
+                    log('Sample data added successfully', 'success');
+                    testApplicationsLoad(); // Reload to show new data
+                } else {
+                    log(`Failed to add sample data: ${response?.error || 'Unknown error'}`, 'error');
+                }
+            } catch (error) {
+                log(`Error adding sample data: ${error.message}`, 'error');
+            }
+        }
+
+        function openHistoryPage() {
+            log('Opening history page...');
+            chrome.tabs.create({ url: chrome.runtime.getURL('history.html') });
+            log('History page opened in new tab', 'success');
+        }
+
+        function openSidePanel() {
+            log('Opening side panel...');
+            try {
+                chrome.sidePanel.open({ windowId: chrome.windows.WINDOW_ID_CURRENT });
+                log('Side panel opened', 'success');
+            } catch (error) {
+                log(`Side panel error: ${error.message}`, 'error');
+                log('Try clicking the extension icon in the toolbar', 'warning');
+            }
+        }
+
+        function testDateFormatting() {
+            log('Testing date formatting...');
+            const timestamps = [
+                Date.now(),
+                Date.now() - 86400000, // 1 day ago
+                '2024-10-01T10:30:00Z',
+                1696158600000, // Specific timestamp
+                'invalid-date'
+            ];
+
+            const resultsDiv = document.getElementById('navigationResults');
+            let html = '<div class="success"><h4>📅 Date Formatting Test Results:</h4><ul>';
+            
+            timestamps.forEach(ts => {
+                try {
+                    // Simulate the formatDate function from history.js
+                    let formatted;
+                    if (!ts) {
+                        formatted = 'Unknown';
+                    } else {
+                        let date;
+                        if (typeof ts === 'number') {
+                            date = new Date(ts);
+                        } else if (typeof ts === 'string') {
+                            date = new Date(ts);
+                            if (isNaN(date.getTime())) {
+                                const numTimestamp = parseInt(ts, 10);
+                                if (!isNaN(numTimestamp)) {
+                                    date = new Date(numTimestamp);
+                                }
+                            }
+                        }
+                        
+                        if (isNaN(date.getTime())) {
+                            formatted = 'Invalid Date';
+                        } else {
+                            const options = {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric',
+                                hour: 'numeric',
+                                minute: '2-digit',
+                                hour12: true
+                            };
+                            formatted = date.toLocaleDateString('en-US', options);
+                        }
+                    }
+                    html += `<li><strong>${ts}:</strong> ${formatted}</li>`;
+                    log(`Date formatting: ${ts} → ${formatted}`, 'success');
+                } catch (error) {
+                    html += `<li><strong>${ts}:</strong> Error - ${error.message}</li>`;
+                    log(`Date formatting error for ${ts}: ${error.message}`, 'error');
+                }
+            });
+            
+            html += '</ul></div>';
+            resultsDiv.innerHTML = html;
+        }
+
+        async function enableMockAuth() {
+            log('Instructions to enable mock authentication:', 'warning');
+            log('1. Open background.js in your code editor', 'warning');
+            log('2. Find line: this.useMockAuth = false;', 'warning');
+            log('3. Change to: this.useMockAuth = true;', 'warning');
+            log('4. Reload the extension in chrome://extensions/', 'warning');
+            log('5. Test authentication again', 'warning');
+        }
+
+        function openOAuthSetup() {
+            chrome.tabs.create({ url: chrome.runtime.getURL('GOOGLE_OAUTH_SETUP.md') });
+            log('OAuth setup guide opened', 'success');
+        }
+
+        async function testAuthStatus() {
+            log('Checking authentication status...');
+            try {
+                const response = await chrome.runtime.sendMessage({ action: 'getAuthStatus' });
+                const resultsDiv = document.getElementById('authResults');
+                if (response?.success) {
+                    const isAuth = response.data?.isAuthenticated;
+                    const user = response.data?.user;
+                    resultsDiv.innerHTML = `
+                        <div class="${isAuth ? 'success' : 'warning'}">
+                            <h4>${isAuth ? '✅' : '⚠️'} Authentication Status</h4>
+                            <p><strong>Authenticated:</strong> ${isAuth ? 'Yes' : 'No'}</p>
+                            ${user ? `
+                                <p><strong>User:</strong> ${user.name} (${user.email})</p>
+                                <p><strong>Type:</strong> ${user.email === 'test@example.com' ? 'Mock' : 'Real Google'}</p>
+                            ` : '<p><strong>User:</strong> None</p>'}
+                        </div>
+                    `;
+                    log(`Auth status: ${isAuth ? 'Authenticated' : 'Not authenticated'}`, isAuth ? 'success' : 'warning');
+                } else {
+                    log(`Auth status check failed: ${response?.error || 'Unknown error'}`, 'error');
+                }
+            } catch (error) {
+                log(`Auth status error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testLogout() {
+            log('Testing logout...');
+            try {
+                const response = await chrome.runtime.sendMessage({ action: 'logout' });
+                if (response?.success) {
+                    log('Logout successful', 'success');
+                    testAuthStatus(); // Check status after logout
+                } else {
+                    log(`Logout failed: ${response?.error || 'Unknown error'}`, 'error');
+                }
+            } catch (error) {
+                log(`Logout error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testExport() {
+            log('Testing CSV export...');
+            try {
+                const response = await chrome.runtime.sendMessage({ action: 'exportToCSV' });
+                if (response?.success) {
+                    log('CSV export successful', 'success');
+                } else {
+                    log(`Export failed: ${response?.error || 'Unknown error'}`, 'error');
+                }
+            } catch (error) {
+                log(`Export error: ${error.message}`, 'error');
+            }
+        }
+
+        async function clearAllData() {
+            if (confirm('Are you sure you want to clear all extension data?')) {
+                log('Clearing all data...');
+                try {
+                    await chrome.storage.sync.clear();
+                    await chrome.storage.local.clear();
+                    log('All data cleared successfully', 'success');
+                    testApplicationsLoad(); // Verify data is cleared
+                } catch (error) {
+                    log(`Clear data error: ${error.message}`, 'error');
+                }
+            }
+        }
+
+        function reloadExtension() {
+            log('To reload the extension:');
+            log('1. Go to chrome://extensions/');
+            log('2. Find "Personal Recruiter"');
+            log('3. Click the refresh button');
+            log('4. Return to test this page again');
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', initializeTests);
+    </script>
+</body>
+</html>
