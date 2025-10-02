@@ -40,6 +40,12 @@ body {
   font-size: 20px;
 }
 
+.logo-icon-img {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+}
+
 .logo-text {
   font-size: 16px;
   font-weight: 600;
@@ -504,6 +510,15 @@ body {
   display: block;
   margin-bottom: 12px;
   opacity: 0.5;
+}
+
+.empty-icon-img {
+  width: 48px;
+  height: 48px;
+  display: block;
+  margin: 0 auto 12px;
+  opacity: 0.5;
+  border-radius: 8px;
 }
 
 /* History Section */
