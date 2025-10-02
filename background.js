@@ -44,6 +44,8 @@ class PersonalRecruiter {
     chrome.runtime.onInstalled.addListener(() => this.onInstalled());
     chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => this.onTabUpdated(tabId, changeInfo, tab));
     chrome.runtime.onMessage.addListener((request, sender, sendResponse) => this.onMessage(request, sender, sendResponse));
+    
+    // Only add click listener if side panel doesn't auto-open
     chrome.action.onClicked.addListener(() => this.onActionClick());
     
     console.log('✅ Event listeners set up');
@@ -62,33 +64,74 @@ class PersonalRecruiter {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
       console.log('Current tab:', tab.id);
       
-      // Open the side panel for this tab
-      await chrome.sidePanel.open({ tabId: tab.id });
-      console.log('✅ Side panel opened successfully');
+      // Try to enable and open the side panel
+      if (chrome.sidePanel && chrome.sidePanel.open) {
+        console.log('Attempting to open side panel...');
+        
+        // First try to set the panel for this tab (in case it's not enabled)
+        try {
+          await chrome.sidePanel.setOptions({
+            tabId: tab.id,
+            path: 'sidepanel.html',
+            enabled: true
+          });
+        } catch (e) {
+          console.log('SetOptions not available or failed:', e.message);
+        }
+        
+        // Then try to open it
+        await chrome.sidePanel.open({ tabId: tab.id });
+        console.log('✅ Side panel opened successfully');
+        
+      } else {
+        throw new Error('SidePanel API not available');
+      }
       
     } catch (error) {
       console.error('❌ Failed to open side panel:', error);
-      
-      // Fallback: open in a new tab
       console.log('Opening fallback tab...');
-      chrome.tabs.create({
-        url: chrome.runtime.getURL('sidepanel.html')
+      
+      // Fallback: open in a new tab but with better sizing
+      const newTab = await chrome.tabs.create({
+        url: chrome.runtime.getURL('sidepanel.html'),
+        active: true
       });
+      
+      // Try to resize the window to be more side-panel-like
+      try {
+        const window = await chrome.windows.get(newTab.windowId);
+        await chrome.windows.update(newTab.windowId, {
+          width: Math.min(1400, window.width),
+          height: window.height
+        });
+      } catch (e) {
+        console.log('Could not resize window:', e.message);
+      }
     }
   }
 
   async onInstalled() {
-    console.log('Personal Recruiter Extension installed');
+    console.log('Extension installed/updated');
     
-    // Initialize storage
-    await chrome.storage.sync.set({
-      jobApplications: [],
-      isAuthenticated: false,
-      userProfile: null,
-      settings: {
-        autoDetection: true,
-        notifications: true,
-        trackingEnabled: true
+    // Set up side panel for all tabs
+    try {
+      if (chrome.sidePanel && chrome.sidePanel.setPanelBehavior) {
+        await chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
+        console.log('✅ Side panel behavior set to open on action click');
+      }
+    } catch (error) {
+      console.log('Could not set panel behavior:', error.message);
+    }
+    
+    // Initialize storage with default settings
+    const defaultSettings = {
+      autoDetection: true,
+      notifications: true
+    };
+    
+    chrome.storage.sync.get(['settings'], (result) => {
+      if (!result.settings) {
+        chrome.storage.sync.set({ settings: defaultSettings });
       }
     });
   }
