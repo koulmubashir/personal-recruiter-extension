@@ -72,59 +72,67 @@ class PersonalRecruiter {
   async onMessage(request, sender, sendResponse) {
     console.log('Background received message:', request);
     
-    try {
-      switch (request.action || request.type) {
-        case 'authenticate':
-          const result = await this.authenticate();
-          sendResponse({ success: true, user: result });
-          break;
-          
-        case 'logout':
-          await this.logout();
-          sendResponse({ success: true });
-          break;
-          
-        case 'saveJobApplication':
-          console.log('Processing saveJobApplication request');
-          const saveResult = await this.saveJobApplication(request.data);
-          sendResponse({ success: true, data: saveResult });
-          break;
-          
-        case 'JOB_DETECTED':
-          console.log('Job detected from content script:', request.data);
-          // Store the detected job info for potential tracking
-          await this.storeDetectedJob(request.data);
-          sendResponse({ success: true });
-          break;
-          
-        case 'getJobApplications':
-          console.log('Processing getJobApplications request');
-          const jobApplications = await this.getJobApplications();
-          sendResponse({ success: true, data: jobApplications });
-          break;
-          
-        case 'exportToCSV':
-          const csvData = await this.exportToCSV();
-          sendResponse({ success: true, data: csvData });
-          break;
-          
-        case 'deleteApplication':
-          await this.deleteApplication(request.id);
-          sendResponse({ success: true });
-          break;
-          
-        case 'getAuthStatus':
-          const authStatus = await this.getAuthStatus();
-          sendResponse({ success: true, data: authStatus });
-          break;
-          
-        default:
-          sendResponse({ success: false, error: 'Unknown action' });
+    // Handle async responses properly
+    (async () => {
+      try {
+        switch (request.action || request.type) {
+          case 'ping':
+            console.log('Ping received, sending pong');
+            sendResponse({ success: true, message: 'pong', timestamp: Date.now() });
+            break;
+            
+          case 'authenticate':
+            const result = await this.authenticate();
+            sendResponse({ success: true, user: result });
+            break;
+            
+          case 'logout':
+            await this.logout();
+            sendResponse({ success: true });
+            break;
+            
+          case 'saveJobApplication':
+            console.log('Processing saveJobApplication request');
+            const saveResult = await this.saveJobApplication(request.data);
+            sendResponse({ success: true, data: saveResult });
+            break;
+            
+          case 'JOB_DETECTED':
+            console.log('Job detected from content script:', request.data);
+            // Store the detected job info for potential tracking
+            await this.storeDetectedJob(request.data);
+            sendResponse({ success: true });
+            break;
+            
+          case 'getJobApplications':
+            console.log('Processing getJobApplications request');
+            const jobApplications = await this.getJobApplications();
+            sendResponse({ success: true, data: jobApplications });
+            break;
+            
+          case 'exportToCSV':
+            const csvData = await this.exportToCSV();
+            sendResponse({ success: true, data: csvData });
+            break;
+            
+          case 'deleteApplication':
+            await this.deleteApplication(request.id);
+            sendResponse({ success: true });
+            break;
+            
+          case 'getAuthStatus':
+            const authStatus = await this.getAuthStatus();
+            sendResponse({ success: true, data: authStatus });
+            break;
+            
+          default:
+            sendResponse({ success: false, error: 'Unknown action' });
+        }
+      } catch (error) {
+        console.error('Background script error:', error);
+        sendResponse({ success: false, error: error.message });
       }
-    } catch (error) {
-      console.error('Background script error:', error);
-      sendResponse({ success: false, error: error.message });
-    }
+    })();
     
     return true; // Keep message channel open for async response
   }
@@ -375,9 +383,29 @@ class PersonalRecruiter {
   }
 
   async deleteApplication(id) {
-    const { jobApplications = [] } = await chrome.storage.sync.get(['jobApplications']);
-    const updatedApplications = jobApplications.filter(app => app.id !== id);
-    await chrome.storage.sync.set({ jobApplications: updatedApplications });
+    console.log('Deleting application:', id);
+    return new Promise((resolve, reject) => {
+      chrome.storage.sync.get(['jobApplications'], (result) => {
+        if (chrome.runtime.lastError) {
+          console.error('Storage get error:', chrome.runtime.lastError);
+          reject(chrome.runtime.lastError);
+          return;
+        }
+        
+        const jobApplications = result.jobApplications || [];
+        const updatedApplications = jobApplications.filter(app => app.id !== id);
+        
+        chrome.storage.sync.set({ jobApplications: updatedApplications }, () => {
+          if (chrome.runtime.lastError) {
+            console.error('Storage set error:', chrome.runtime.lastError);
+            reject(chrome.runtime.lastError);
+          } else {
+            console.log('Application deleted successfully');
+            resolve();
+          }
+        });
+      });
+    });
   }
 
   async exportToCSV() {

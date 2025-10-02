@@ -581,6 +581,16 @@ class PopupController {
   async debugStorage() {
     console.log('=== STORAGE DEBUG ===');
     
+    // Test 0: Ping background script
+    try {
+      console.log('🏓 Testing background script connection...');
+      const pingResponse = await this.sendMessage({ action: 'ping' });
+      console.log('✅ Background script responding:', pingResponse);
+    } catch (error) {
+      console.error('❌ Background script not responding:', error);
+      return;
+    }
+    
     // Test 1: Direct storage access
     chrome.storage.sync.get(null, (data) => {
       console.log('📦 All storage data:', data);
@@ -610,6 +620,23 @@ class PopupController {
         }
       });
     });
+    
+    // Test 3: Test background script save
+    try {
+      console.log('🔄 Testing background script save...');
+      const bgResponse = await this.sendMessage({
+        action: 'saveJobApplication',
+        data: {
+          jobTitle: 'Background Test Job',
+          company: 'Background Test Company',
+          url: 'https://background-test.com',
+          manual: true
+        }
+      });
+      console.log('✅ Background save successful:', bgResponse);
+    } catch (error) {
+      console.error('❌ Background save failed:', error);
+    }
     
     console.log('=== STORAGE DEBUG END ===');
   }
