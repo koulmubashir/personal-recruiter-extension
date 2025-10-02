@@ -582,25 +582,72 @@ class PersonalRecruiter {
   async deleteApplication(id) {
     console.log('Deleting application:', id);
     return new Promise((resolve, reject) => {
+      // First try sync storage
       chrome.storage.sync.get(['jobApplications'], (result) => {
         if (chrome.runtime.lastError) {
-          console.error('Storage get error:', chrome.runtime.lastError);
-          reject(chrome.runtime.lastError);
-          return;
-        }
-        
-        const jobApplications = result.jobApplications || [];
-        const updatedApplications = jobApplications.filter(app => app.id !== id);
-        
-        chrome.storage.sync.set({ jobApplications: updatedApplications }, () => {
-          if (chrome.runtime.lastError) {
-            console.error('Storage set error:', chrome.runtime.lastError);
-            reject(chrome.runtime.lastError);
+          console.warn('Sync storage error, trying local storage:', chrome.runtime.lastError);
+          // Fallback to local storage
+          chrome.storage.local.get(['jobApplications'], (localResult) => {
+            if (chrome.runtime.lastError) {
+              console.error('Both storage types failed:', chrome.runtime.lastError);
+              reject(chrome.runtime.lastError);
+              return;
+            }
+            
+            const jobApplications = localResult.jobApplications || [];
+            const updatedApplications = jobApplications.filter(app => app.id !== id);
+            
+            chrome.storage.local.set({ jobApplications: updatedApplications }, () => {
+              if (chrome.runtime.lastError) {
+                console.error('Local storage set error:', chrome.runtime.lastError);
+                reject(chrome.runtime.lastError);
+              } else {
+                console.log('Application deleted successfully from local storage');
+                resolve();
+              }
+            });
+          });
+        } else {
+          const jobApplications = result.jobApplications || [];
+          const originalLength = jobApplications.length;
+          const updatedApplications = jobApplications.filter(app => app.id !== id);
+          
+          if (updatedApplications.length === originalLength) {
+            console.log('App not found in sync storage, checking local storage...');
+            // App not found in sync storage, try local storage
+            chrome.storage.local.get(['jobApplications'], (localResult) => {
+              if (chrome.runtime.lastError) {
+                console.error('Local storage get error:', chrome.runtime.lastError);
+                reject(chrome.runtime.lastError);
+                return;
+              }
+              
+              const localJobApplications = localResult.jobApplications || [];
+              const localUpdatedApplications = localJobApplications.filter(app => app.id !== id);
+              
+              chrome.storage.local.set({ jobApplications: localUpdatedApplications }, () => {
+                if (chrome.runtime.lastError) {
+                  console.error('Local storage set error:', chrome.runtime.lastError);
+                  reject(chrome.runtime.lastError);
+                } else {
+                  console.log('Application deleted successfully from local storage');
+                  resolve();
+                }
+              });
+            });
           } else {
-            console.log('Application deleted successfully');
-            resolve();
+            // App found and deleted from sync storage
+            chrome.storage.sync.set({ jobApplications: updatedApplications }, () => {
+              if (chrome.runtime.lastError) {
+                console.error('Sync storage set error:', chrome.runtime.lastError);
+                reject(chrome.runtime.lastError);
+              } else {
+                console.log('Application deleted successfully from sync storage');
+                resolve();
+              }
+            });
           }
-        });
+        }
       });
     });
   }

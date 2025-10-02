@@ -310,8 +310,12 @@ class SidePanelController {
       console.log('Applications response:', response);
       
       if (response && response.success) {
+        const previousCount = this.applications.length;
         this.applications = response.data || [];
-        console.log('✅ Loaded applications:', this.applications.length);
+        console.log('✅ Loaded applications:', this.applications.length, 'Previous count:', previousCount);
+        
+        // Log the application IDs for debugging
+        console.log('Application IDs:', this.applications.map(app => app.id));
         
         // Sample data creation disabled - user can add applications manually
         // if (this.applications.length === 0) {
@@ -322,6 +326,7 @@ class SidePanelController {
         this.updateStats();
         this.renderRecentApplications();
         this.renderHistoryApplications();
+        console.log('✅ UI updated after loading applications');
       } else {
         console.error('❌ Failed to load applications:', response);
       }
@@ -861,11 +866,15 @@ class SidePanelController {
   }
 
   renderHistoryApplications() {
+    console.log('=== RENDERING HISTORY APPLICATIONS ===');
+    console.log('Total applications:', this.applications.length);
+    
     let filteredApps = [...this.applications];
 
     // Apply status filter
     if (this.statusFilter.value) {
       filteredApps = filteredApps.filter(app => app.status === this.statusFilter.value);
+      console.log('After status filter:', filteredApps.length);
     }
 
     // Apply time filter
@@ -887,6 +896,7 @@ class SidePanelController {
       
       if (cutoffDate) {
         filteredApps = filteredApps.filter(app => new Date(app.timestamp) >= cutoffDate);
+        console.log('After time filter:', filteredApps.length);
       }
     }
 
@@ -895,6 +905,8 @@ class SidePanelController {
     
     // Take first 10 for the side panel
     const displayApps = filteredApps.slice(0, 10);
+    console.log('Displaying in history:', displayApps.length, 'apps');
+    console.log('Display app IDs:', displayApps.map(app => app.id));
 
     this.historyApplications.innerHTML = displayApps.map(app => `
       <div class="history-item clickable" data-app-id="${app.id}" data-app='${JSON.stringify(app).replace(/'/g, "&apos;")}'>
@@ -910,6 +922,8 @@ class SidePanelController {
       </div>
     `).join('');
     
+    console.log('✅ History HTML updated');
+    
     // Add click event listeners to history items
     this.historyApplications.querySelectorAll('.history-item.clickable').forEach(item => {
       item.addEventListener('click', () => {
@@ -917,6 +931,8 @@ class SidePanelController {
         this.showJobDetailsModal(appData);
       });
     });
+    
+    console.log('✅ History click listeners added');
   }
 
   filterHistory() {
@@ -1105,29 +1121,40 @@ class SidePanelController {
   async deleteJobApplication() {
     if (!this.currentAppData) return;
     
+    console.log('=== DELETING APPLICATION ===', this.currentAppData.id);
+    
     const confirmDelete = confirm(
       `Are you sure you want to delete the application for "${this.currentAppData.jobTitle}" at "${this.currentAppData.company}"?\n\nThis action cannot be undone.`
     );
     
-    if (!confirmDelete) return;
+    if (!confirmDelete) {
+      console.log('Deletion cancelled by user');
+      return;
+    }
     
     try {
+      console.log('Sending delete request to background...');
       const response = await this.sendMessage({
         action: 'deleteApplication',
         id: this.currentAppData.id
       });
       
+      console.log('Delete response:', response);
+      
       if (response && response.success) {
+        console.log('✅ Application deleted successfully, reloading data...');
         this.showToast('Application deleted successfully', 'success');
         this.closeJobDetailsModal();
         
         // Reload applications
         await this.loadApplications();
+        console.log('✅ UI refreshed after deletion');
       } else {
+        console.error('❌ Failed to delete application:', response);
         this.showToast('Failed to delete application', 'error');
       }
     } catch (error) {
-      console.error('Delete error:', error);
+      console.error('❌ Delete error:', error);
       this.showToast('Error deleting application', 'error');
     }
   }
