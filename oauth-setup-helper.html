@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Extension ID Checker</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .info { background: #e7f3ff; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        .error { background: #ffebee; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        .success { background: #e8f5e8; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        code { background: #f5f5f5; padding: 2px 5px; border-radius: 3px; }
+        pre { background: #f5f5f5; padding: 10px; border-radius: 5px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>Chrome Extension OAuth Setup Helper</h1>
+    
+    <div class="info">
+        <h3>Current Extension ID:</h3>
+        <code id="extensionId">Loading...</code>
+    </div>
+    
+    <div class="info">
+        <h3>Steps to Fix OAuth:</h3>
+        <ol>
+            <li>Copy the Extension ID above</li>
+            <li>Go to <a href="https://console.cloud.google.com/apis/credentials" target="_blank">Google Cloud Console</a></li>
+            <li>Create new OAuth 2.0 Client ID</li>
+            <li>Choose "Chrome Extension" type</li>
+            <li>Paste Extension ID as "Item ID"</li>
+            <li>Update manifest.json with new client ID</li>
+        </ol>
+    </div>
+    
+    <div id="oauthTest"></div>
+    
+    <button onclick="testCurrentOAuth()">Test Current OAuth</button>
+    
+    <pre id="log"></pre>
+
+    <script>
+        function log(message) {
+            const logEl = document.getElementById('log');
+            logEl.textContent += new Date().toLocaleTimeString() + ': ' + message + '\n';
+            console.log(message);
+        }
+
+        // Get extension ID
+        const extensionId = chrome.runtime.id;
+        document.getElementById('extensionId').textContent = extensionId;
+        log('Extension ID: ' + extensionId);
+
+        // Check manifest OAuth config
+        const manifest = chrome.runtime.getManifest();
+        log('Current OAuth client ID: ' + manifest.oauth2?.client_id);
+
+        function testCurrentOAuth() {
+            log('Testing OAuth with current configuration...');
+            
+            chrome.identity.getAuthToken({ interactive: false }, (token) => {
+                if (chrome.runtime.lastError) {
+                    log('No cached token: ' + chrome.runtime.lastError.message);
+                } else {
+                    log('Cached token exists: ' + (token ? 'YES' : 'NO'));
+                }
+                
+                chrome.identity.getAuthToken({ interactive: true }, (token) => {
+                    if (chrome.runtime.lastError) {
+                        log('OAuth ERROR: ' + chrome.runtime.lastError.message);
+                        
+                        const oauthDiv = document.getElementById('oauthTest');
+                        oauthDiv.innerHTML = `
+                            <div class="error">
+                                <h3>OAuth Configuration Error</h3>
+                                <p><strong>Error:</strong> ${chrome.runtime.lastError.message}</p>
+                                <p>This usually means the OAuth client ID in manifest.json is not configured for this extension ID.</p>
+                            </div>
+                        `;
+                    } else {
+                        log('OAuth SUCCESS: Token received');
+                        const oauthDiv = document.getElementById('oauthTest');
+                        oauthDiv.innerHTML = `
+                            <div class="success">
+                                <h3>OAuth Working!</h3>
+                                <p>Authentication is working correctly.</p>
+                            </div>
+                        `;
+                    }
+                });
+            });
+        }
+
+        // Auto-test on load
+        setTimeout(testCurrentOAuth, 1000);
+    </script>
+</body>
+</html>

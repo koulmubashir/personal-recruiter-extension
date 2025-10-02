@@ -519,6 +519,51 @@ class HistoryController {
     alert(message);
   }
 
+  formatDate(timestamp) {
+    if (!timestamp) return 'Unknown';
+    
+    try {
+      let date;
+      
+      // Handle different timestamp formats
+      if (typeof timestamp === 'number') {
+        date = new Date(timestamp);
+      } else if (typeof timestamp === 'string') {
+        // Try parsing as ISO string first, then as number
+        date = new Date(timestamp);
+        if (isNaN(date.getTime())) {
+          const numTimestamp = parseInt(timestamp, 10);
+          if (!isNaN(numTimestamp)) {
+            date = new Date(numTimestamp);
+          }
+        }
+      } else {
+        return 'Invalid Date';
+      }
+      
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        console.warn('Invalid timestamp:', timestamp);
+        return 'Invalid Date';
+      }
+      
+      // Format as: Oct 2, 2025 at 2:30 PM
+      const options = {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      };
+      
+      return date.toLocaleDateString('en-US', options);
+    } catch (error) {
+      console.error('Error formatting date:', error, 'Timestamp:', timestamp);
+      return 'Invalid Date';
+    }
+  }
+
   debounce(func, wait) {
     let timeout;
     return function executedFunction(...args) {

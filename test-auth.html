@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>OAuth Test</title>
+</head>
+<body>
+    <h1>OAuth Test</h1>
+    <button onclick="testAuth()">Test Authentication</button>
+    <pre id="output"></pre>
+
+    <script>
+        function log(message) {
+            const output = document.getElementById('output');
+            output.textContent += new Date().toLocaleTimeString() + ': ' + message + '\n';
+            console.log(message);
+        }
+
+        function testAuth() {
+            log('Testing OAuth configuration...');
+            
+            chrome.identity.getAuthToken({ interactive: true }, (token) => {
+                if (chrome.runtime.lastError) {
+                    log('Error: ' + chrome.runtime.lastError.message);
+                } else {
+                    log('Token received: ' + (token ? 'SUCCESS' : 'NULL'));
+                    if (token) {
+                        log('Token length: ' + token.length);
+                        log('Token start: ' + token.substring(0, 50));
+                        
+                        // Test API call
+                        fetch('https://www.googleapis.com/oauth2/v1/userinfo?alt=json', {
+                            headers: { 'Authorization': 'Bearer ' + token }
+                        })
+                        .then(response => {
+                            log('API response status: ' + response.status);
+                            return response.json();
+                        })
+                        .then(data => {
+                            log('User data: ' + JSON.stringify(data, null, 2));
+                        })
+                        .catch(error => {
+                            log('API error: ' + error.message);
+                        });
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>

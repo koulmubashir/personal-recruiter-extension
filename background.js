@@ -1,6 +1,9 @@
 // Background service worker for Personal Recruiter Extension
 class PersonalRecruiter {
   constructor() {
+    // Set to false for real Google OAuth authentication
+    this.useMockAuth = false; // REAL GOOGLE AUTH ENABLED
+    
     this.jobSites = [
       // Job boards
       'linkedin.com/jobs',
@@ -154,8 +157,10 @@ class PersonalRecruiter {
             return { success: true, message: 'pong', timestamp: Date.now() };
             
           case 'authenticate':
+            console.log('=== BACKGROUND: Processing authenticate request ===');
             const result = await this.authenticate();
-            return { success: true, user: result };
+            console.log('=== BACKGROUND: Sending auth result to sidepanel ===');
+            return { success: true, data: result };
             
           case 'logout':
             await this.logout();
@@ -192,28 +197,59 @@ class PersonalRecruiter {
             return { success: false, error: 'Unknown action' };
         }
       } catch (error) {
-        console.error('Background script error:', error);
-        return { success: false, error: error.message };
+        console.error('=== BACKGROUND: Message handler error ===');
+        console.error('Action:', request.action || request.type);
+        console.error('Error details:', {
+          message: error.message,
+          stack: error.stack,
+          name: error.name
+        });
+        return { success: false, error: error.message, details: error.stack };
       }
     };
     
     // Execute async handler and send response
     handleAsync()
       .then(response => {
-        console.log('Sending response:', response);
+        console.log('=== BACKGROUND: Sending response ===', response);
         sendResponse(response);
       })
       .catch(error => {
-        console.error('Handler error:', error);
-        sendResponse({ success: false, error: error.message });
+        console.error('=== BACKGROUND: Handler error ===', error);
+        sendResponse({ success: false, error: error.message, details: error.stack });
       });
     
     return true; // Keep message channel open for async response
   }
 
   async authenticate() {
+    // Mock authentication for testing (remove after OAuth setup)
+    if (this.useMockAuth) {
+      console.log('=== MOCK AUTH: Using test authentication ===');
+      
+      const mockUser = {
+        id: 'test-user-123',
+        email: 'test@example.com',
+        name: 'Test User',
+        picture: 'https://via.placeholder.com/96x96.png?text=TU'
+      };
+      
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      await chrome.storage.sync.set({
+        isAuthenticated: true,
+        userProfile: mockUser,
+        authToken: 'mock-token-' + Date.now()
+      });
+      
+      console.log('=== MOCK AUTH: Test authentication successful ===');
+      return mockUser;
+    }
+    
+    // Real OAuth authentication
     try {
-      console.log('Starting authentication...');
+      console.log('=== BACKGROUND: Starting authentication ===');
       
       // Clear any existing cached tokens first
       await this.clearAuthToken();
@@ -221,25 +257,35 @@ class PersonalRecruiter {
       // Request interactive authentication with promise wrapper for compatibility
       let token;
       try {
+        console.log('Requesting auth token...');
         token = await new Promise((resolve, reject) => {
           chrome.identity.getAuthToken({ interactive: true }, (authToken) => {
             if (chrome.runtime.lastError) {
+              console.error('Chrome identity error:', chrome.runtime.lastError);
               reject(new Error(chrome.runtime.lastError.message));
             } else {
+              console.log('Token received successfully');
               resolve(authToken);
             }
           });
         });
       } catch (error) {
         console.error('Token request failed:', error);
-        throw new Error('Authentication failed: ' + error.message);
+        console.error('Error details:', {
+          message: error.message,
+          stack: error.stack,
+          name: error.name
+        });
+        throw new Error('Token request failed: ' + error.message);
       }
       
       console.log('Raw token response:', token);
       console.log('Token type:', typeof token);
       
       if (!token || typeof token !== 'string') {
-        throw new Error('No valid authentication token received. Got: ' + typeof token);
+        const errorMsg = 'No valid authentication token received. Got: ' + typeof token + ' value: ' + String(token);
+        console.error(errorMsg);
+        throw new Error(errorMsg);
       }
       
       console.log('Got auth token (length:', token.length, ')');
@@ -251,6 +297,7 @@ class PersonalRecruiter {
       }
       
       // Use the simplest possible approach - OAuth2 v1 userinfo
+      console.log('Making API request to Google...');
       const response = await fetch('https://www.googleapis.com/oauth2/v1/userinfo?alt=json', {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -263,24 +310,32 @@ class PersonalRecruiter {
       if (!response.ok) {
         const errorText = await response.text();
         console.error('API Error Response:', errorText);
-        throw new Error(`Failed to fetch user profile: ${response.status} ${response.statusText}`);
+        const errorMsg = `Failed to fetch user profile: ${response.status} ${response.statusText} - ${errorText}`;
+        throw new Error(errorMsg);
       }
       
       const userProfile = await response.json();
       console.log('Got user profile:', userProfile);
       
       // Store authentication data
+      console.log('Storing authentication data...');
       await chrome.storage.sync.set({
         isAuthenticated: true,
         userProfile: userProfile,
         authToken: token
       });
       
-      console.log('Authentication successful, user data stored');
+      console.log('=== BACKGROUND: Authentication successful ===');
       return userProfile;
       
     } catch (error) {
-      console.error('Authentication failed:', error);
+      console.error('=== BACKGROUND: Authentication failed ===');
+      console.error('Error details:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name,
+        cause: error.cause
+      });
       
       // Clear any stored auth data on failure
       await chrome.storage.sync.set({
@@ -344,9 +399,22 @@ class PersonalRecruiter {
 
   async logout() {
     try {
+      console.log('=== BACKGROUND: Starting logout ===');
+      
+      if (this.useMockAuth) {
+        console.log('=== MOCK AUTH: Mock logout ===');
+        await chrome.storage.sync.set({
+          isAuthenticated: false,
+          userProfile: null,
+          authToken: null
+        });
+        return;
+      }
+      
+      // Real OAuth logout
       const { authToken } = await chrome.storage.sync.get(['authToken']);
       
-      if (authToken) {
+      if (authToken && authToken !== 'mock-token') {
         await chrome.identity.removeCachedAuthToken({ token: authToken });
       }
       
@@ -355,6 +423,8 @@ class PersonalRecruiter {
         userProfile: null,
         authToken: null
       });
+      
+      console.log('=== BACKGROUND: Logout successful ===');
     } catch (error) {
       console.error('Logout failed:', error);
       throw error;
@@ -499,7 +569,11 @@ class PersonalRecruiter {
 
   async getAuthStatus() {
     const { isAuthenticated, userProfile } = await chrome.storage.sync.get(['isAuthenticated', 'userProfile']);
-    return { isAuthenticated, userProfile };
+    return { 
+      isAuthenticated: isAuthenticated || false, 
+      user: userProfile,
+      userProfile: userProfile  // Keep both for compatibility
+    };
   }
 
   async checkAuthStatus() {

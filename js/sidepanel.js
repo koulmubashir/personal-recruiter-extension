@@ -120,19 +120,24 @@ class SidePanelController {
     this.showLoading();
     
     try {
+      console.log('=== SIDEPANEL: Sending authenticate message ===');
       const response = await this.sendMessage({ action: 'authenticate' });
-      console.log('Login response:', response);
+      console.log('=== SIDEPANEL: Login response ===', response);
       
       if (response && response.success && response.data) {
+        console.log('=== SIDEPANEL: Login successful ===');
         this.isAuthenticated = true;
         this.currentUser = response.data;
         this.showMainContent();
         await this.loadApplications();
       } else {
-        this.showError('Login failed: ' + (response?.error || 'Unknown error'));
+        const errorMsg = 'Login failed: ' + (response?.error || 'Unknown error');
+        console.error('=== SIDEPANEL: Login failed ===', errorMsg);
+        console.error('Full response:', response);
+        this.showError(errorMsg);
       }
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('=== SIDEPANEL: Login exception ===', error);
       this.showError('Login failed: ' + error.message);
     } finally {
       this.hideLoading();
@@ -170,8 +175,29 @@ class SidePanelController {
     this.mainContent.style.display = 'flex';
     
     if (this.currentUser) {
-      this.userAvatar.src = this.currentUser.picture || '';
-      this.userName.textContent = this.currentUser.name || this.currentUser.email || 'User';
+      // Update avatar with Google profile picture
+      const avatarImg = document.getElementById('userAvatar');
+      const userNameEl = document.getElementById('userName');
+      const userEmailEl = document.getElementById('userEmail');
+      
+      if (avatarImg) {
+        avatarImg.src = this.currentUser.picture || 'https://via.placeholder.com/40x40.png?text=👤';
+        avatarImg.alt = `${this.currentUser.name || 'User'}'s profile picture`;
+      }
+      
+      if (userNameEl) {
+        userNameEl.textContent = this.currentUser.name || 'Google User';
+      }
+      
+      if (userEmailEl) {
+        userEmailEl.textContent = this.currentUser.email || '';
+      }
+      
+      console.log('=== SIDEPANEL: Displaying user ===', {
+        name: this.currentUser.name,
+        email: this.currentUser.email,
+        picture: this.currentUser.picture
+      });
     }
   }
 

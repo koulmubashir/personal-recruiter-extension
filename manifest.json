@@ -49,7 +49,15 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["popup.html", "history.html", "chrome-test.html"],
+      "resources": [
+        "popup.html", 
+        "history.html", 
+        "chrome-test.html",
+        "extension-test.html",
+        "oauth-setup-helper.html",
+        "test-auth.html",
+        "auth-toggle.html"
+      ],
       "matches": ["<all_urls>"]
     }
   ]
