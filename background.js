@@ -455,36 +455,79 @@ class PersonalRecruiter {
   }
 
   async saveJobApplication(applicationData) {
-    console.log('Saving job application:', applicationData);
+    console.log('=== BACKGROUND: Saving job application ===', applicationData);
     
     return new Promise((resolve, reject) => {
-      chrome.storage.sync.get(['jobApplications'], (result) => {
-        if (chrome.runtime.lastError) {
-          console.error('Storage get error:', chrome.runtime.lastError);
-          reject(chrome.runtime.lastError);
-          return;
-        }
-        
-        const jobApplications = result.jobApplications || [];
-        
-        const newApplication = {
-          id: Date.now().toString(),
-          timestamp: new Date().toISOString(),
-          ...applicationData
-        };
-        
-        jobApplications.push(newApplication);
-        
-        chrome.storage.sync.set({ jobApplications }, () => {
+      // Add a small delay to prevent quota issues
+      setTimeout(() => {
+        chrome.storage.sync.get(['jobApplications'], (result) => {
           if (chrome.runtime.lastError) {
-            console.error('Storage set error:', chrome.runtime.lastError);
-            reject(chrome.runtime.lastError);
-          } else {
-            console.log('Job application saved successfully. Total applications:', jobApplications.length);
-            resolve(newApplication);
+            console.error('Storage get error:', chrome.runtime.lastError);
+            
+            // Try local storage as fallback
+            chrome.storage.local.get(['jobApplications'], (localResult) => {
+              if (chrome.runtime.lastError) {
+                reject(new Error('Storage quota exceeded. Please export your data and clear some applications.'));
+                return;
+              }
+              this.saveToStorage(localResult.jobApplications || [], applicationData, resolve, reject, 'local');
+            });
+            return;
           }
+          
+          this.saveToStorage(result.jobApplications || [], applicationData, resolve, reject, 'sync');
         });
-      });
+      }, 50); // Small delay to prevent rate limiting
+    });
+  }
+
+  saveToStorage(jobApplications, applicationData, resolve, reject, storageType = 'sync') {
+    // Check for duplicates to prevent excessive storage usage
+    const existingIndex = jobApplications.findIndex(app => 
+      app.jobTitle === applicationData.jobTitle && 
+      app.company === applicationData.company &&
+      app.url === applicationData.url
+    );
+    
+    const newApplication = {
+      id: Date.now().toString(),
+      timestamp: Date.now(), // Use timestamp for better sorting
+      dateCreated: new Date().toISOString(),
+      ...applicationData
+    };
+    
+    if (existingIndex !== -1) {
+      // Update existing application instead of creating duplicate
+      jobApplications[existingIndex] = { ...jobApplications[existingIndex], ...newApplication };
+      console.log('Updated existing application to prevent duplicate');
+    } else {
+      jobApplications.push(newApplication);
+    }
+    
+    const storage = storageType === 'sync' ? chrome.storage.sync : chrome.storage.local;
+    
+    storage.set({ jobApplications }, () => {
+      if (chrome.runtime.lastError) {
+        console.error(`${storageType} storage set error:`, chrome.runtime.lastError);
+        
+        if (storageType === 'sync') {
+          // Fallback to local storage
+          console.log('Trying local storage as fallback...');
+          chrome.storage.local.set({ jobApplications }, () => {
+            if (chrome.runtime.lastError) {
+              reject(new Error('Storage quota exceeded. Please export your data and clear some applications.'));
+            } else {
+              console.log('✅ Application saved to local storage');
+              resolve(newApplication);
+            }
+          });
+        } else {
+          reject(new Error('Storage quota exceeded. Please export your data and clear some applications.'));
+        }
+      } else {
+        console.log(`✅ Application saved to ${storageType} storage. Total:`, jobApplications.length);
+        resolve(newApplication);
+      }
     });
   }
 
@@ -501,16 +544,35 @@ class PersonalRecruiter {
   }
 
   async getJobApplications() {
-    console.log('Getting job applications from storage...');
+    console.log('=== BACKGROUND: Getting job applications ===');
     return new Promise((resolve) => {
       chrome.storage.sync.get(['jobApplications'], (result) => {
         if (chrome.runtime.lastError) {
-          console.error('Storage get error:', chrome.runtime.lastError);
-          resolve([]);
+          console.warn('Sync storage error, trying local storage:', chrome.runtime.lastError);
+          // Fallback to local storage
+          chrome.storage.local.get(['jobApplications'], (localResult) => {
+            if (chrome.runtime.lastError) {
+              console.error('Both storage types failed:', chrome.runtime.lastError);
+              resolve([]);
+            } else {
+              const applications = localResult.jobApplications || [];
+              console.log('✅ Retrieved applications from local storage:', applications.length);
+              const sorted = applications.sort((a, b) => {
+                const timestampA = typeof a.timestamp === 'string' ? new Date(a.timestamp).getTime() : a.timestamp;
+                const timestampB = typeof b.timestamp === 'string' ? new Date(b.timestamp).getTime() : b.timestamp;
+                return timestampB - timestampA;
+              });
+              resolve(sorted);
+            }
+          });
         } else {
           const applications = result.jobApplications || [];
-          console.log('Retrieved applications:', applications.length);
-          const sorted = applications.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+          console.log('✅ Retrieved applications from sync storage:', applications.length);
+          const sorted = applications.sort((a, b) => {
+            const timestampA = typeof a.timestamp === 'string' ? new Date(a.timestamp).getTime() : a.timestamp;
+            const timestampB = typeof b.timestamp === 'string' ? new Date(b.timestamp).getTime() : b.timestamp;
+            return timestampB - timestampA;
+          });
           resolve(sorted);
         }
       });

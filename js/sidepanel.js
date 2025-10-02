@@ -37,6 +37,8 @@ class SidePanelController {
     this.jobId = document.getElementById('jobId');
     this.status = document.getElementById('status');
     this.notes = document.getElementById('notes');
+    this.aiMagicBtn = document.getElementById('aiMagicBtn');
+    this.saveApplicationBtn = document.getElementById('saveApplicationBtn');
 
     // Recent and history
     this.recentApplications = document.getElementById('recentApplications');
@@ -58,6 +60,20 @@ class SidePanelController {
     
     // Toast container
     this.toastContainer = document.getElementById('toastContainer');
+    
+    // Job details modal
+    this.jobDetailsModal = document.getElementById('jobDetailsModal');
+    this.closeModal = document.getElementById('closeModal');
+    this.modalJobTitle = document.getElementById('modalJobTitle');
+    this.modalCompany = document.getElementById('modalCompany');
+    this.modalStatus = document.getElementById('modalStatus');
+    this.modalJobId = document.getElementById('modalJobId');
+    this.modalAppliedDate = document.getElementById('modalAppliedDate');
+    this.modalJobUrl = document.getElementById('modalJobUrl');
+    this.modalNotes = document.getElementById('modalNotes');
+    this.editJobBtn = document.getElementById('editJobBtn');
+    this.deleteJobBtn = document.getElementById('deleteJobBtn');
+    this.updateStatusBtn = document.getElementById('updateStatusBtn');
   }
 
   setupEventListeners() {
@@ -72,6 +88,13 @@ class SidePanelController {
 
     // Quick add form
     this.quickAddForm.addEventListener('submit', (e) => this.saveQuickApplication(e));
+    this.aiMagicBtn.addEventListener('click', () => this.runAIMagic());
+    
+    // Reset save button styling when form is manually modified
+    [this.jobTitle, this.company, this.jobUrl, this.jobId, this.notes].forEach(field => {
+      field.addEventListener('input', () => this.resetSaveButtonStyle());
+    });
+    this.status.addEventListener('change', () => this.resetSaveButtonStyle());
 
     // Action buttons
     this.exportBtn.addEventListener('click', () => this.exportApplications());
@@ -84,6 +107,24 @@ class SidePanelController {
     // Settings
     this.autoDetectionToggle.addEventListener('change', () => this.updateSettings());
     this.notificationsToggle.addEventListener('change', () => this.updateSettings());
+    
+    // Modal event listeners
+    this.closeModal.addEventListener('click', () => this.closeJobDetailsModal());
+    this.jobDetailsModal.addEventListener('click', (e) => {
+      if (e.target === this.jobDetailsModal) {
+        this.closeJobDetailsModal();
+      }
+    });
+    this.editJobBtn.addEventListener('click', () => this.editJobApplication());
+    this.deleteJobBtn.addEventListener('click', () => this.deleteJobApplication());
+    this.updateStatusBtn.addEventListener('click', () => this.updateJobStatus());
+    
+    // ESC key to close modal
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && this.jobDetailsModal.style.display !== 'none') {
+        this.closeJobDetailsModal();
+      }
+    });
   }
 
   async checkAuthStatus() {
@@ -272,11 +313,11 @@ class SidePanelController {
         this.applications = response.data || [];
         console.log('✅ Loaded applications:', this.applications.length);
         
-        // If no applications exist, create some sample data for testing
-        if (this.applications.length === 0) {
-          console.log('No applications found, creating sample data...');
-          await this.createSampleData();
-        }
+        // Sample data creation disabled - user can add applications manually
+        // if (this.applications.length === 0) {
+        //   console.log('No applications found, creating sample data...');
+        //   await this.createSampleData();
+        // }
         
         this.updateStats();
         this.renderRecentApplications();
@@ -289,7 +330,429 @@ class SidePanelController {
     }
   }
 
+  async runAIMagic() {
+    console.log('=== Running AI Magic ===');
+    
+    // Update button to loading state
+    this.aiMagicBtn.textContent = '🔮 Analyzing Page...';
+    this.aiMagicBtn.classList.add('loading');
+    this.aiMagicBtn.disabled = true;
+    
+    try {
+      // Get current active tab
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      
+      if (!tab) {
+        throw new Error('No active tab found');
+      }
+      
+      console.log('Current tab:', tab.url);
+      
+      // Check if we can access the tab
+      if (tab.url.startsWith('chrome://') || tab.url.startsWith('chrome-extension://') || tab.url.startsWith('moz-extension://')) {
+        throw new Error('Cannot analyze Chrome internal pages or extension pages');
+      }
+      
+      console.log('Injecting content script...');
+      
+      // Inject content script to extract page data
+      let results;
+      try {
+        results = await chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          func: () => {
+            console.log('Content script injected, extracting data...');
+            
+            // Function to extract job page data - injected directly
+            const data = {
+              title: document.title,
+              url: window.location.href,
+              text: '',
+              structured: {}
+            };
+            
+            console.log('Document title:', data.title);
+            
+            // Get visible text content
+            try {
+              const walker = document.createTreeWalker(
+                document.body,
+                NodeFilter.SHOW_TEXT,
+                {
+                  acceptNode: function(node) {
+                    const parent = node.parentElement;
+                    if (!parent) return NodeFilter.FILTER_REJECT;
+                    
+                    // Skip script, style, and hidden elements
+                    const tagName = parent.tagName.toLowerCase();
+                    if (['script', 'style', 'noscript'].includes(tagName)) {
+                      return NodeFilter.FILTER_REJECT;
+                    }
+                    
+                    const style = window.getComputedStyle(parent);
+                    if (style.display === 'none' || style.visibility === 'hidden') {
+                      return NodeFilter.FILTER_REJECT;
+                    }
+                    
+                    return NodeFilter.FILTER_ACCEPT;
+                  }
+                }
+              );
+              
+              const textNodes = [];
+              let node;
+              while (node = walker.nextNode()) {
+                const text = node.textContent.trim();
+                if (text.length > 3) {
+                  textNodes.push(text);
+                }
+              }
+              
+              data.text = textNodes.join(' ').substring(0, 5000); // Limit to 5000 chars
+              console.log('Extracted text length:', data.text.length);
+            } catch (textError) {
+              console.warn('Text extraction failed:', textError);
+              data.text = document.body.textContent?.substring(0, 5000) || '';
+            }
+            
+            // Try to extract structured data
+            data.structured = {
+              metaTags: {},
+              jsonLd: [],
+              headings: [],
+              links: []
+            };
+            
+            try {
+              // Meta tags
+              document.querySelectorAll('meta[property], meta[name]').forEach(meta => {
+                const property = meta.getAttribute('property') || meta.getAttribute('name');
+                const content = meta.getAttribute('content');
+                if (property && content) {
+                  data.structured.metaTags[property] = content;
+                }
+              });
+              
+              // JSON-LD structured data
+              document.querySelectorAll('script[type="application/ld+json"]').forEach(script => {
+                try {
+                  const jsonData = JSON.parse(script.textContent);
+                  data.structured.jsonLd.push(jsonData);
+                } catch (e) {
+                  // Ignore invalid JSON
+                }
+              });
+              
+              // Headings
+              document.querySelectorAll('h1, h2, h3').forEach(heading => {
+                data.structured.headings.push({
+                  tag: heading.tagName,
+                  text: heading.textContent.trim()
+                });
+              });
+              
+              console.log('Structured data extracted:', {
+                metaTagsCount: Object.keys(data.structured.metaTags).length,
+                jsonLdCount: data.structured.jsonLd.length,
+                headingsCount: data.structured.headings.length
+              });
+              
+            } catch (structuredError) {
+              console.warn('Structured data extraction failed:', structuredError);
+            }
+            
+            return data;
+          }
+        });
+      } catch (scriptError) {
+        console.error('Script injection failed:', scriptError);
+        throw new Error(`Failed to inject content script: ${scriptError.message}`);
+      }
+      
+      if (!results || !results[0]) {
+        throw new Error('Content script execution failed - no results returned');
+      }
+      
+      const pageData = results[0].result;
+      
+      if (!pageData) {
+        throw new Error('Content script returned no data');
+      }
+      
+      console.log('Extracted page data:', pageData);
+      
+      // Use AI to parse the data
+      const jobInfo = await this.parseJobDataWithAI(pageData, tab.url);
+      console.log('Parsed job info:', jobInfo);
+      
+      // Fill the form with parsed data
+      this.fillFormWithJobInfo(jobInfo);
+      
+      // Show success message
+      this.showToast('✨ AI Magic completed! Form filled with extracted data.', 'success');
+      
+    } catch (error) {
+      console.error('AI Magic error:', error);
+      console.error('Error stack:', error.stack);
+      this.showToast(`AI Magic failed: ${error.message}`, 'error');
+    } finally {
+      // Reset button
+      this.aiMagicBtn.textContent = '🪄 AI Magic - Auto Fill from Page';
+      this.aiMagicBtn.classList.remove('loading');
+      this.aiMagicBtn.disabled = false;
+    }
+  }
+
+  async parseJobDataWithAI(pageData, url) {
+    // Simple rule-based AI parsing (can be enhanced with actual AI later)
+    const text = pageData.text.toLowerCase();
+    const title = pageData.title;
+    const headings = pageData.structured.headings;
+    
+    const jobInfo = {
+      jobTitle: '',
+      company: '',
+      jobId: '',
+      url: url,
+      notes: 'Auto-filled by AI Magic',
+      confidence: 0
+    };
+    
+    // Extract job title
+    // Priority: 1. JSON-LD, 2. Meta tags, 3. Headings, 4. Title patterns
+    
+    // Check JSON-LD for JobPosting
+    for (const ld of pageData.structured.jsonLd) {
+      if (ld['@type'] === 'JobPosting' || (Array.isArray(ld) && ld.some(item => item['@type'] === 'JobPosting'))) {
+        const jobPosting = Array.isArray(ld) ? ld.find(item => item['@type'] === 'JobPosting') : ld;
+        if (jobPosting.title) {
+          jobInfo.jobTitle = jobPosting.title;
+          jobInfo.confidence += 0.4;
+        }
+        if (jobPosting.hiringOrganization?.name) {
+          jobInfo.company = jobPosting.hiringOrganization.name;
+          jobInfo.confidence += 0.4;
+        }
+      }
+    }
+    
+    // Check meta tags
+    const metaTags = pageData.structured.metaTags;
+    if (!jobInfo.jobTitle && metaTags['og:title']) {
+      jobInfo.jobTitle = metaTags['og:title'];
+      jobInfo.confidence += 0.2;
+    }
+    
+    // Extract from headings if not found
+    if (!jobInfo.jobTitle && headings.length > 0) {
+      // Look for job title patterns in headings
+      const jobTitlePatterns = /\b(developer|engineer|manager|analyst|designer|specialist|coordinator|director|lead|senior|junior|intern)\b/i;
+      
+      for (const heading of headings) {
+        if (jobTitlePatterns.test(heading.text)) {
+          jobInfo.jobTitle = heading.text;
+          jobInfo.confidence += 0.2;
+          break;
+        }
+      }
+      
+      // Fallback to first heading
+      if (!jobInfo.jobTitle) {
+        jobInfo.jobTitle = headings[0].text;
+        jobInfo.confidence += 0.1;
+      }
+    }
+    
+    // Extract company name
+    if (!jobInfo.company) {
+      // Look for company patterns in various places
+      const companyPatterns = [
+        /at ([A-Z][a-zA-Z\s&.,]+(?:Inc|LLC|Corp|Ltd|Co|Company))/i,
+        /([A-Z][a-zA-Z\s&.,]+(?:Inc|LLC|Corp|Ltd|Co|Company))/i,
+        /company[:\s]+([A-Z][a-zA-Z\s&.,]+)/i
+      ];
+      
+      for (const pattern of companyPatterns) {
+        const match = text.match(pattern);
+        if (match) {
+          jobInfo.company = match[1].trim();
+          jobInfo.confidence += 0.2;
+          break;
+        }
+      }
+      
+      // Try to extract from URL
+      if (!jobInfo.company) {
+        const urlParts = url.replace(/^https?:\/\//i, '').split('/')[0].split('.');
+        if (urlParts.length >= 2) {
+          const domain = urlParts[urlParts.length - 2];
+          if (domain !== 'com' && domain !== 'org' && domain !== 'net') {
+            jobInfo.company = domain.charAt(0).toUpperCase() + domain.slice(1);
+            jobInfo.confidence += 0.1;
+          }
+        }
+      }
+    }
+    
+    // Extract job ID
+    if (!jobInfo.jobId) {
+      // First check JSON-LD for identifier or jobID
+      for (const ld of pageData.structured.jsonLd) {
+        if (ld['@type'] === 'JobPosting' || (Array.isArray(ld) && ld.some(item => item['@type'] === 'JobPosting'))) {
+          const jobPosting = Array.isArray(ld) ? ld.find(item => item['@type'] === 'JobPosting') : ld;
+          if (jobPosting.identifier) {
+            jobInfo.jobId = jobPosting.identifier;
+            jobInfo.confidence += 0.3;
+            break;
+          }
+        }
+      }
+      
+      // Look for job ID patterns in text and URL
+      if (!jobInfo.jobId) {
+        const jobIdPatterns = [
+          // Common job ID formats
+          /job[_\s]*id[:\s]*([A-Z0-9-]{3,20})/i,
+          /position[_\s]*id[:\s]*([A-Z0-9-]{3,20})/i,
+          /req[_\s]*(?:id|number)[:\s]*([A-Z0-9-]{3,20})/i,
+          /reference[_\s]*(?:id|number)[:\s]*([A-Z0-9-]{3,20})/i,
+          /posting[_\s]*id[:\s]*([A-Z0-9-]{3,20})/i,
+          
+          // URL patterns
+          /\/jobs?\/([A-Z0-9-]{3,20})/i,
+          /\/positions?\/([A-Z0-9-]{3,20})/i,
+          /\/career[s]?\/([A-Z0-9-]{3,20})/i,
+          /[?&](?:job|position|req)_?id=([A-Z0-9-]{3,20})/i,
+          
+          // General patterns in text
+          /\b([A-Z]{2,4}[-_]\d{3,6})\b/,  // REQ-12345, TC-001
+          /\b([A-Z]{2,6}\d{3,6})\b/,      // REQ12345, TECH001
+          /\b(\d{4,8})\b/,                // Simple numbers like 123456
+          
+          // LinkedIn specific
+          /currentJobId[:\s]*([A-Z0-9-]{3,20})/i,
+          
+          // Indeed specific
+          /jk=([A-Za-z0-9]{10,})/,
+          
+          // Company-specific patterns
+          /\b(JR\d+)\b/i,                 // JR123
+          /\b(P\d+)\b/i,                  // P123
+          /\b(R\d+)\b/i                   // R123
+        ];
+        
+        // First try URL patterns (higher confidence)
+        for (const pattern of jobIdPatterns.slice(5, 9)) {
+          const match = url.match(pattern);
+          if (match && match[1]) {
+            jobInfo.jobId = match[1];
+            jobInfo.confidence += 0.2;
+            break;
+          }
+        }
+        
+        // Then try text patterns if no URL match
+        if (!jobInfo.jobId) {
+          const fullText = pageData.text + ' ' + pageData.title;
+          for (const pattern of jobIdPatterns) {
+            const match = fullText.match(pattern);
+            if (match && match[1]) {
+              const id = match[1];
+              // Validate the job ID (not too short, not all numbers unless long enough)
+              if (id.length >= 3 && (!/^\d+$/.test(id) || id.length >= 5)) {
+                jobInfo.jobId = id;
+                jobInfo.confidence += 0.15;
+                break;
+              }
+            }
+          }
+        }
+        
+        // Special handling for meta tags
+        if (!jobInfo.jobId) {
+          const metaTags = pageData.structured.metaTags;
+          const jobIdMetaKeys = ['job-id', 'position-id', 'req-id', 'posting-id', 'jobId', 'positionId'];
+          
+          for (const key of jobIdMetaKeys) {
+            if (metaTags[key]) {
+              jobInfo.jobId = metaTags[key];
+              jobInfo.confidence += 0.2;
+              break;
+            }
+          }
+        }
+      }
+    }
+    
+    // Clean up extracted data
+    if (jobInfo.jobTitle) {
+      jobInfo.jobTitle = jobInfo.jobTitle.replace(/\s+/g, ' ').trim();
+      // Remove common suffixes
+      jobInfo.jobTitle = jobInfo.jobTitle.replace(/\s*[-|]\s*.*$/, '').trim();
+    }
+    
+    if (jobInfo.company) {
+      jobInfo.company = jobInfo.company.replace(/\s+/g, ' ').trim();
+      // Remove common suffixes
+      jobInfo.company = jobInfo.company.replace(/\s*(Inc|LLC|Corp|Ltd|Co|Company)\.?$/i, '').trim();
+    }
+    
+    if (jobInfo.jobId) {
+      jobInfo.jobId = jobInfo.jobId.replace(/\s+/g, '').trim().toUpperCase();
+    }
+    
+    return jobInfo;
+  }
+
+  fillFormWithJobInfo(jobInfo) {
+    console.log('Filling form with:', jobInfo);
+    
+    // Fill the form fields
+    if (jobInfo.jobTitle) {
+      this.jobTitle.value = jobInfo.jobTitle;
+    }
+    
+    if (jobInfo.company) {
+      this.company.value = jobInfo.company;
+    }
+    
+    if (jobInfo.url) {
+      this.jobUrl.value = jobInfo.url;
+    }
+    
+    if (jobInfo.jobId) {
+      this.jobId.value = jobInfo.jobId;
+    }
+    
+    if (jobInfo.notes) {
+      this.notes.value = jobInfo.notes;
+    }
+    
+    // Change save button to green if we have good data
+    if (jobInfo.confidence > 0.3 || (jobInfo.jobTitle && jobInfo.company)) {
+      this.saveApplicationBtn.classList.add('ai-filled');
+      this.saveApplicationBtn.innerHTML = '<span class="btn-icon">✨</span>Save AI-Filled Application';
+    }
+    
+    // Focus on the first empty required field
+    if (!this.jobTitle.value) {
+      this.jobTitle.focus();
+    } else if (!this.company.value) {
+      this.company.focus();
+    }
+  }
+
+  resetSaveButtonStyle() {
+    this.saveApplicationBtn.classList.remove('ai-filled');
+    this.saveApplicationBtn.innerHTML = '<span class="btn-icon">➕</span>Save Application';
+  }
+
   async createSampleData() {
+    // Ask user for confirmation before creating sample data
+    if (!confirm('This will create 3 sample job applications for testing. Continue?')) {
+      return;
+    }
+
     const sampleApplications = [
       {
         id: Date.now().toString(),
@@ -340,6 +803,7 @@ class SidePanelController {
       setTimeout(() => this.loadApplications(), 500);
     } catch (error) {
       console.error('Failed to create sample data:', error);
+      this.showToast('Failed to create sample data: ' + error.message, 'error');
     }
   }
 
@@ -374,7 +838,7 @@ class SidePanelController {
     this.noApplications.style.display = 'none';
 
     this.recentApplications.innerHTML = recentApps.map(app => `
-      <div class="recent-item">
+      <div class="recent-item clickable" data-app-id="${app.id}" data-app='${JSON.stringify(app).replace(/'/g, "&apos;")}'>
         <div class="recent-item-header">
           <div class="recent-item-title">${app.jobTitle || 'Unknown Position'}</div>
           <span class="recent-item-status status-${(app.status || 'applied').toLowerCase().replace(' ', '-')}">
@@ -383,8 +847,17 @@ class SidePanelController {
         </div>
         <div class="recent-item-company">${app.company || 'Unknown Company'}</div>
         <div class="recent-item-date">${this.formatDate(app.timestamp)}</div>
+        <div class="click-hint">Click to view details</div>
       </div>
     `).join('');
+    
+    // Add click event listeners to recent items
+    this.recentApplications.querySelectorAll('.recent-item.clickable').forEach(item => {
+      item.addEventListener('click', () => {
+        const appData = JSON.parse(item.getAttribute('data-app').replace(/&apos;/g, "'"));
+        this.showJobDetailsModal(appData);
+      });
+    });
   }
 
   renderHistoryApplications() {
@@ -424,7 +897,7 @@ class SidePanelController {
     const displayApps = filteredApps.slice(0, 10);
 
     this.historyApplications.innerHTML = displayApps.map(app => `
-      <div class="history-item">
+      <div class="history-item clickable" data-app-id="${app.id}" data-app='${JSON.stringify(app).replace(/'/g, "&apos;")}'>
         <div class="history-item-header">
           <div class="history-item-title">${app.jobTitle || 'Unknown Position'}</div>
           <span class="recent-item-status status-${(app.status || 'applied').toLowerCase().replace(' ', '-')}">
@@ -433,8 +906,17 @@ class SidePanelController {
         </div>
         <div class="history-item-company">${app.company || 'Unknown Company'}</div>
         <div class="history-item-date">${this.formatDate(app.timestamp)}</div>
+        <div class="click-hint">Click to view details</div>
       </div>
     `).join('');
+    
+    // Add click event listeners to history items
+    this.historyApplications.querySelectorAll('.history-item.clickable').forEach(item => {
+      item.addEventListener('click', () => {
+        const appData = JSON.parse(item.getAttribute('data-app').replace(/&apos;/g, "'"));
+        this.showJobDetailsModal(appData);
+      });
+    });
   }
 
   filterHistory() {
@@ -560,6 +1042,139 @@ class SidePanelController {
         }
       });
     });
+  }
+
+  // Job Details Modal Methods
+  showJobDetailsModal(appData) {
+    console.log('Showing job details for:', appData);
+    
+    // Store current app data for edit/delete operations
+    this.currentAppData = appData;
+    
+    // Populate modal with data
+    this.modalJobTitle.textContent = appData.jobTitle || 'Unknown Position';
+    this.modalCompany.textContent = appData.company || 'Unknown Company';
+    this.modalStatus.textContent = appData.status || 'Applied';
+    this.modalStatus.setAttribute('data-status', appData.status || 'Applied');
+    this.modalJobId.textContent = appData.jobId || '-';
+    this.modalAppliedDate.textContent = this.formatDate(appData.timestamp);
+    this.modalNotes.textContent = appData.notes || 'No notes available';
+    
+    // Handle job URL
+    if (appData.url) {
+      this.modalJobUrl.href = appData.url;
+      this.modalJobUrl.style.display = 'inline-flex';
+    } else {
+      this.modalJobUrl.style.display = 'none';
+    }
+    
+    // Show modal
+    this.jobDetailsModal.style.display = 'flex';
+    document.body.style.overflow = 'hidden'; // Prevent background scrolling
+  }
+
+  closeJobDetailsModal() {
+    this.jobDetailsModal.style.display = 'none';
+    document.body.style.overflow = 'auto';
+    this.currentAppData = null;
+  }
+
+  editJobApplication() {
+    if (!this.currentAppData) return;
+    
+    // Switch to Quick Add tab and populate form
+    this.switchTab('quick');
+    
+    // Fill form with current data
+    this.jobTitle.value = this.currentAppData.jobTitle || '';
+    this.company.value = this.currentAppData.company || '';
+    this.jobUrl.value = this.currentAppData.url || '';
+    this.jobId.value = this.currentAppData.jobId || '';
+    this.status.value = this.currentAppData.status || 'Applied';
+    this.notes.value = this.currentAppData.notes || '';
+    
+    // Close modal
+    this.closeJobDetailsModal();
+    
+    // Focus on first field
+    this.jobTitle.focus();
+    
+    this.showToast('Job application loaded for editing', 'success');
+  }
+
+  async deleteJobApplication() {
+    if (!this.currentAppData) return;
+    
+    const confirmDelete = confirm(
+      `Are you sure you want to delete the application for "${this.currentAppData.jobTitle}" at "${this.currentAppData.company}"?\n\nThis action cannot be undone.`
+    );
+    
+    if (!confirmDelete) return;
+    
+    try {
+      const response = await this.sendMessage({
+        action: 'deleteApplication',
+        id: this.currentAppData.id
+      });
+      
+      if (response && response.success) {
+        this.showToast('Application deleted successfully', 'success');
+        this.closeJobDetailsModal();
+        
+        // Reload applications
+        await this.loadApplications();
+      } else {
+        this.showToast('Failed to delete application', 'error');
+      }
+    } catch (error) {
+      console.error('Delete error:', error);
+      this.showToast('Error deleting application', 'error');
+    }
+  }
+
+  async updateJobStatus() {
+    if (!this.currentAppData) return;
+    
+    const newStatus = prompt(
+      'Update application status:\n\nCurrent status: ' + (this.currentAppData.status || 'Applied') + 
+      '\n\nChoose new status:\n- Applied\n- In Review\n- Interview Scheduled\n- Rejected\n- Offer Received',
+      this.currentAppData.status || 'Applied'
+    );
+    
+    if (!newStatus || newStatus === this.currentAppData.status) return;
+    
+    const validStatuses = ['Applied', 'In Review', 'Interview Scheduled', 'Rejected', 'Offer Received'];
+    if (!validStatuses.includes(newStatus)) {
+      this.showToast('Invalid status. Please use: ' + validStatuses.join(', '), 'error');
+      return;
+    }
+    
+    try {
+      // Update the current app data
+      const updatedApp = { ...this.currentAppData, status: newStatus };
+      
+      const response = await this.sendMessage({
+        action: 'saveJobApplication',
+        data: updatedApp
+      });
+      
+      if (response && response.success) {
+        this.showToast(`Status updated to "${newStatus}"`, 'success');
+        
+        // Update modal display
+        this.modalStatus.textContent = newStatus;
+        this.modalStatus.setAttribute('data-status', newStatus);
+        this.currentAppData.status = newStatus;
+        
+        // Reload applications
+        await this.loadApplications();
+      } else {
+        this.showToast('Failed to update status', 'error');
+      }
+    } catch (error) {
+      console.error('Status update error:', error);
+      this.showToast('Error updating status', 'error');
+    }
   }
 }
 

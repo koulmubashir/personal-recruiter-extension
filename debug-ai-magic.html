@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Magic Debug Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; }
+        .debug-section { background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #007bff; }
+        .error { background: #f8d7da; padding: 15px; border-radius: 6px; margin: 10px 0; border-left: 4px solid #dc3545; }
+        .success { background: #d4edda; padding: 15px; border-radius: 6px; margin: 10px 0; border-left: 4px solid #28a745; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; border: none; border-radius: 4px; }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-danger { background: #dc3545; color: white; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 4px; font-size: 12px; overflow-x: auto; }
+        .step { background: white; padding: 15px; margin: 10px 0; border-radius: 6px; border: 1px solid #ddd; }
+    </style>
+</head>
+<body>
+    <h1>🐛 AI Magic Debug Test</h1>
+    
+    <div class="success">
+        <h3>✅ AI Magic Fix Applied!</h3>
+        <p>The content script injection method has been improved with better error handling and debugging.</p>
+    </div>
+
+    <div class="debug-section">
+        <h3>🔧 Debug Steps</h3>
+        
+        <div class="step">
+            <h4>Step 1: Reload Extension</h4>
+            <p>First, reload your extension to get the latest fixes:</p>
+            <button class="btn-primary" onclick="openExtensionsPage()">Open Extensions Page</button>
+        </div>
+
+        <div class="step">
+            <h4>Step 2: Test on This Page</h4>
+            <p>Try the AI Magic button on this debug page first:</p>
+            <ul>
+                <li>Open the side panel</li>
+                <li>Go to Quick Add tab</li>
+                <li>Click "AI Magic" button</li>
+                <li>Check browser console (F12) for detailed logs</li>
+            </ul>
+        </div>
+
+        <div class="step">
+            <h4>Step 3: Check Console Logs</h4>
+            <p>Open browser DevTools (F12) and look for these messages:</p>
+            <pre id="expectedLogs">Expected console messages:
+=== Running AI Magic ===
+Current tab: [current URL]
+Injecting content script...
+Content script injected, extracting data...
+Document title: AI Magic Debug Test
+Extracted text length: [number]
+Structured data extracted: {...}
+Extracted page data: {...}
+Parsed job info: {...}</pre>
+        </div>
+
+        <div class="step">
+            <h4>Step 4: Test Error Conditions</h4>
+            <button class="btn-danger" onclick="testChromeError()">Test Chrome Page Error</button>
+            <p>This should show "Cannot analyze Chrome internal pages"</p>
+        </div>
+    </div>
+
+    <div class="debug-section">
+        <h3>🎯 Expected Results</h3>
+        <ul>
+            <li><strong>Job Title:</strong> Should extract "Senior Frontend Developer" or similar</li>
+            <li><strong>Company:</strong> Should extract "TechCorp Inc." or domain name</li>
+            <li><strong>Job ID:</strong> Should extract "TC-2025-FE-001", "REQ-2025-001", or "P12345"</li>
+            <li><strong>URL:</strong> Should populate with current page URL</li>
+            <li><strong>Notes:</strong> Should add "Auto-filled by AI Magic"</li>
+        </ul>
+    </div>
+
+    <div class="debug-section">
+        <h3>🚨 Common Issues & Solutions</h3>
+        
+        <div class="error">
+            <h4>❌ "Failed to extract page data"</h4>
+            <p><strong>Causes:</strong></p>
+            <ul>
+                <li>Extension permissions not granted</li>
+                <li>Content script injection blocked</li>
+                <li>Page loading not complete</li>
+            </ul>
+            <p><strong>Solutions:</strong></p>
+            <ul>
+                <li>Reload the extension and grant all permissions</li>
+                <li>Wait for page to fully load before clicking AI Magic</li>
+                <li>Try on a different website</li>
+            </ul>
+        </div>
+
+        <div class="error">
+            <h4>❌ "No active tab found"</h4>
+            <p><strong>Solution:</strong> Make sure you have an active tab open and try again.</p>
+        </div>
+
+        <div class="error">
+            <h4>❌ "Cannot analyze Chrome internal pages"</h4>
+            <p><strong>Expected:</strong> This is normal for chrome:// or extension pages. Try on a regular website.</p>
+        </div>
+    </div>
+
+    <pre id="debugOutput">Debug console ready...\n</pre>
+
+    <script>
+        const log = (message, type = 'info') => {
+            const output = document.getElementById('debugOutput');
+            const timestamp = new Date().toLocaleTimeString();
+            const prefix = type === 'success' ? '✅' : type === 'error' ? '❌' : type === 'warning' ? '⚠️' : 'ℹ️';
+            output.textContent += `[${timestamp}] ${prefix} ${message}\n`;
+            output.scrollTop = output.scrollHeight;
+            console.log(`[AI Magic Debug] ${message}`);
+        };
+
+        function openExtensionsPage() {
+            chrome.tabs.create({ url: 'chrome://extensions/' });
+            log('Extensions page opened - reload Personal Recruiter extension', 'success');
+        }
+
+        function testChromeError() {
+            chrome.tabs.create({ url: 'chrome://extensions/' }, (tab) => {
+                log('Opened Chrome page - AI Magic should show error on this page', 'warning');
+            });
+        }
+
+        // Log when this page loads
+        log('AI Magic debug page loaded');
+        log('This page has basic HTML structure for testing AI extraction');
+        log('Try the AI Magic button now and check the console for detailed logs');
+
+        // Add some test data to the page
+        document.addEventListener('DOMContentLoaded', () => {
+            log('Page DOM loaded - ready for AI Magic testing');
+        });
+    </script>
+
+    <!-- Test job posting data -->
+    <div style="display: none;">
+        <h1>Software Engineer</h1>
+        <h2>Test Company Inc.</h2>
+        <p>Join our team as a Software Engineer at Test Company Inc.</p>
+    </div>
+</body>
+</html>

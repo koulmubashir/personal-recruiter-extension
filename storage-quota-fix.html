@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Storage Quota Fix Instructions</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; }
+        .fix-section { background: #f0f8ff; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #007bff; }
+        .warning { background: #fff3cd; padding: 15px; border-radius: 6px; margin: 10px 0; border-left: 4px solid #ffc107; }
+        .success { background: #d4edda; padding: 15px; border-radius: 6px; margin: 10px 0; border-left: 4px solid #28a745; }
+        .error { background: #f8d7da; padding: 15px; border-radius: 6px; margin: 10px 0; border-left: 4px solid #dc3545; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; border: none; border-radius: 4px; }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-warning { background: #ffc107; color: black; }
+        .btn-danger { background: #dc3545; color: white; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 4px; }
+        code { background: #f8f9fa; padding: 2px 4px; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Storage Quota Fix Applied</h1>
+    
+    <div class="success">
+        <h3>✅ Fixes Applied to Your Extension:</h3>
+        <ul>
+            <li><strong>Rate Limiting:</strong> Added delays between storage operations</li>
+            <li><strong>Duplicate Prevention:</strong> Updates existing applications instead of creating duplicates</li>
+            <li><strong>Storage Fallback:</strong> Uses local storage if sync storage quota is exceeded</li>
+            <li><strong>Better Error Handling:</strong> Provides clear error messages for quota issues</li>
+        </ul>
+    </div>
+
+    <div class="fix-section">
+        <h3>🧪 Test the Storage Fix</h3>
+        <p>After reloading the extension, the "Save Application" should work without quota errors.</p>
+        <button class="btn-primary" onclick="testSaveApplication()">Test Save Application</button>
+        <button class="btn-warning" onclick="checkCurrentStorage()">Check Storage Usage</button>
+        <button class="btn-success" onclick="exportAndClear()">Export & Clear Old Data</button>
+        <div id="testResults"></div>
+    </div>
+
+    <div class="warning">
+        <h3>⚠️ If You Still Get Quota Errors:</h3>
+        <ol>
+            <li><strong>Export your data:</strong> Use "Export to CSV" to save your applications</li>
+            <li><strong>Clear old applications:</strong> Delete applications older than 30-60 days</li>
+            <li><strong>Check for duplicates:</strong> Remove duplicate job applications</li>
+            <li><strong>Extension will use local storage:</strong> Automatic fallback is now enabled</li>
+        </ol>
+    </div>
+
+    <div class="fix-section">
+        <h3>📊 Storage Limits:</h3>
+        <ul>
+            <li><strong>Chrome Sync Storage:</strong> 100KB total, 120 operations/minute</li>
+            <li><strong>Chrome Local Storage:</strong> 10MB total (fallback)</li>
+            <li><strong>Typical Application Size:</strong> ~200-500 bytes each</li>
+            <li><strong>Estimated Capacity:</strong> 200-500 applications in sync storage</li>
+        </ul>
+    </div>
+
+    <div class="fix-section">
+        <h3>🔄 Next Steps:</h3>
+        <ol>
+            <li><strong>Reload Extension:</strong> Go to chrome://extensions/ and reload "Personal Recruiter"</li>
+            <li><strong>Test Save:</strong> Try saving a job application through the side panel</li>
+            <li><strong>Monitor Storage:</strong> Check storage usage periodically</li>
+            <li><strong>Regular Cleanup:</strong> Export and clear old data monthly</li>
+        </ol>
+        <button class="btn-primary" onclick="openExtensionsPage()">Open Extensions Page</button>
+    </div>
+
+    <pre id="logOutput">Ready to test storage fixes...\n</pre>
+
+    <script>
+        const log = (message, type = 'info') => {
+            const output = document.getElementById('logOutput');
+            const timestamp = new Date().toLocaleTimeString();
+            const prefix = type === 'success' ? '✅' : type === 'error' ? '❌' : type === 'warning' ? '⚠️' : 'ℹ️';
+            output.textContent += `[${timestamp}] ${prefix} ${message}\n`;
+            console.log(message);
+            output.scrollTop = output.scrollHeight;
+        };
+
+        async function testSaveApplication() {
+            log('Testing save application with quota fix...');
+            const resultsDiv = document.getElementById('testResults');
+            
+            try {
+                const testApp = {
+                    jobTitle: 'Test Position - ' + Date.now(),
+                    company: 'Test Company',
+                    url: 'https://example.com/job/' + Date.now(),
+                    status: 'Applied',
+                    manual: true
+                };
+
+                const response = await chrome.runtime.sendMessage({ 
+                    action: 'saveJobApplication', 
+                    data: testApp 
+                });
+
+                if (response?.success) {
+                    resultsDiv.innerHTML = `
+                        <div class="success">
+                            <h4>✅ Save Application Test Passed!</h4>
+                            <p>The storage quota fix is working correctly.</p>
+                            <p><strong>Saved:</strong> ${testApp.jobTitle}</p>
+                        </div>
+                    `;
+                    log('Save application test successful!', 'success');
+                } else {
+                    resultsDiv.innerHTML = `
+                        <div class="error">
+                            <h4>❌ Save Application Test Failed</h4>
+                            <p>${response?.error || 'Unknown error'}</p>
+                        </div>
+                    `;
+                    log(`Save test failed: ${response?.error || 'Unknown error'}`, 'error');
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ Test Error</h4>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+                log(`Test error: ${error.message}`, 'error');
+            }
+        }
+
+        async function checkCurrentStorage() {
+            log('Checking current storage usage...');
+            
+            try {
+                // Check sync storage
+                const syncUsage = await new Promise((resolve) => {
+                    chrome.storage.sync.getBytesInUse(null, resolve);
+                });
+                
+                // Check local storage
+                const localUsage = await new Promise((resolve) => {
+                    chrome.storage.local.getBytesInUse(null, resolve);
+                });
+                
+                // Get applications count
+                const response = await chrome.runtime.sendMessage({ action: 'getJobApplications' });
+                const appCount = response?.success ? (response.data?.length || 0) : 0;
+                
+                const syncLimit = 102400; // 100KB
+                const localLimit = 10485760; // 10MB
+                
+                log(`Storage Usage Report:`, 'success');
+                log(`Sync Storage: ${syncUsage} bytes / ${syncLimit} bytes (${Math.round(syncUsage/syncLimit*100)}%)`);
+                log(`Local Storage: ${localUsage} bytes / ${localLimit} bytes (${Math.round(localUsage/localLimit*100)}%)`);
+                log(`Applications: ${appCount} total`);
+                log(`Average per app: ${appCount > 0 ? Math.round(syncUsage/appCount) : 0} bytes`);
+                
+                if (syncUsage > syncLimit * 0.8) {
+                    log('⚠️ Sync storage is getting full - consider cleanup', 'warning');
+                }
+                
+            } catch (error) {
+                log(`Storage check error: ${error.message}`, 'error');
+            }
+        }
+
+        async function exportAndClear() {
+            log('Starting export and cleanup process...');
+            
+            try {
+                // Export data first
+                const exportResponse = await chrome.runtime.sendMessage({ action: 'exportToCSV' });
+                if (exportResponse?.success && exportResponse.data) {
+                    // Create download
+                    const blob = new Blob([exportResponse.data], { type: 'text/csv' });
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = url;
+                    a.download = `job-applications-backup-${new Date().toISOString().split('T')[0]}.csv`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                    
+                    log('✅ Data exported successfully', 'success');
+                    
+                    // Ask if user wants to clear old data
+                    if (confirm('Data exported! Do you want to clear applications older than 60 days?')) {
+                        // Here you could implement cleanup logic
+                        log('Manual cleanup: Go to History page and delete old applications', 'warning');
+                    }
+                } else {
+                    log('Export failed - no data or error occurred', 'error');
+                }
+            } catch (error) {
+                log(`Export error: ${error.message}`, 'error');
+            }
+        }
+
+        function openExtensionsPage() {
+            chrome.tabs.create({ url: 'chrome://extensions/' });
+            log('Extensions page opened - reload Personal Recruiter extension', 'success');
+        }
+
+        // Auto-check storage on load
+        setTimeout(checkCurrentStorage, 1000);
+    </script>
+</body>
+</html>

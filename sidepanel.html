@@ -128,7 +128,14 @@
                                 <label for="notes">Notes</label>
                                 <textarea id="notes" rows="2" placeholder="Optional notes..."></textarea>
                             </div>
-                            <button type="submit" class="btn primary full-width">
+                            
+                            <!-- AI Magic Button -->
+                            <button type="button" id="aiMagicBtn" class="btn secondary full-width ai-magic-btn">
+                                <span class="btn-icon">🪄</span>
+                                AI Magic - Auto Fill from Page
+                            </button>
+                            
+                            <button type="submit" class="btn primary full-width" id="saveApplicationBtn">
                                 <span class="btn-icon">➕</span>
                                 Save Application
                             </button>
@@ -216,6 +223,60 @@
 
         <!-- Toast Notifications -->
         <div id="toastContainer" class="toast-container"></div>
+        
+        <!-- Job Details Modal -->
+        <div id="jobDetailsModal" class="modal-overlay" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 id="modalJobTitle">Job Title</h3>
+                    <button id="closeModal" class="close-btn">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="job-detail-section">
+                        <div class="detail-row">
+                            <label>Company:</label>
+                            <span id="modalCompany">Company Name</span>
+                        </div>
+                        <div class="detail-row">
+                            <label>Status:</label>
+                            <span id="modalStatus" class="status-badge">Applied</span>
+                        </div>
+                        <div class="detail-row">
+                            <label>Job ID:</label>
+                            <span id="modalJobId">-</span>
+                        </div>
+                        <div class="detail-row">
+                            <label>Applied Date:</label>
+                            <span id="modalAppliedDate">Date</span>
+                        </div>
+                        <div class="detail-row">
+                            <label>Job URL:</label>
+                            <div class="url-container">
+                                <a id="modalJobUrl" href="#" target="_blank" class="job-url">View Original Posting</a>
+                            </div>
+                        </div>
+                        <div class="detail-row full-width">
+                            <label>Notes:</label>
+                            <div id="modalNotes" class="notes-content">No notes available</div>
+                        </div>
+                    </div>
+                    <div class="modal-actions">
+                        <button id="editJobBtn" class="btn primary">
+                            <span class="btn-icon">✏️</span>
+                            Edit Application
+                        </button>
+                        <button id="deleteJobBtn" class="btn secondary">
+                            <span class="btn-icon">🗑️</span>
+                            Delete
+                        </button>
+                        <button id="updateStatusBtn" class="btn secondary">
+                            <span class="btn-icon">🔄</span>
+                            Update Status
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="js/sidepanel.js"></script>
