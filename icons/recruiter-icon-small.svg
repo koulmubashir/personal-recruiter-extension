@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1E40AF;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#3B82F6;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="skinGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FBBF24;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#F59E0B;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <circle cx="16" cy="16" r="14" fill="url(#bgGradient)"/>
+  
+  <!-- Body (suit) -->
+  <path d="M 9 21 Q 9 19 11 18 L 13 17 Q 16 16 19 17 L 21 18 Q 23 19 23 21 L 23 30 L 9 30 Z" fill="#374151"/>
+  
+  <!-- Shirt -->
+  <path d="M 12 18 Q 16 17 20 18 L 20 30 L 12 30 Z" fill="white"/>
+  
+  <!-- Tie -->
+  <path d="M 15.5 18 L 16.5 18 L 17 22 Q 16 24 15 22 Z" fill="#DC2626"/>
+  
+  <!-- Head -->
+  <circle cx="16" cy="13" r="6" fill="url(#skinGradient)"/>
+  
+  <!-- Hair -->
+  <path d="M 10 11 Q 10 7 16 6 Q 22 7 22 11 Q 22 9 20 10 Q 18 9 16 9 Q 14 9 12 10 Q 10 9 10 11 Z" fill="#8B4513"/>
+  
+  <!-- Eyes -->
+  <circle cx="14" cy="12" r="1" fill="white"/>
+  <circle cx="18" cy="12" r="1" fill="white"/>
+  <circle cx="14" cy="12" r="0.5" fill="#1F2937"/>
+  <circle cx="18" cy="12" r="0.5" fill="#1F2937"/>
+  
+  <!-- Glasses -->
+  <circle cx="14" cy="12" r="2.5" fill="none" stroke="#374151" stroke-width="0.8"/>
+  <circle cx="18" cy="12" r="2.5" fill="none" stroke="#374151" stroke-width="0.8"/>
+  <path d="M 16 12 L 17 12" stroke="#374151" stroke-width="0.8"/>
+  
+  <!-- Smile -->
+  <path d="M 14 15 Q 16 16.5 18 15" stroke="#D97706" stroke-width="0.8" fill="none" stroke-linecap="round"/>
+  
+  <!-- Clipboard -->
+  <g transform="translate(23, 9)">
+    <rect x="0" y="0" width="4" height="5" rx="0.5" fill="#FBBF24"/>
+    <rect x="0.5" y="0.5" width="3" height="4" fill="white"/>
+    <rect x="1" y="1.5" width="0.3" height="0.3" fill="#10B981"/>
+    <rect x="1.5" y="1.5" width="1.5" height="0.2" fill="#374151"/>
+    <rect x="1" y="2.5" width="0.3" height="0.3" fill="#10B981"/>
+    <rect x="1.5" y="2.5" width="1" height="0.2" fill="#374151"/>
+  </g>
+  
+  <!-- Sparkle -->
+  <path d="M 7 8 L 8 10 L 10 11 L 8 12 L 7 14 L 6 12 L 4 11 L 6 10 Z" fill="#FBBF24" opacity="0.8"/>
+</svg>

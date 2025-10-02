@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Recruiter - Icon Generator</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #1F2937;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+        }
+        
+        .icon-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        
+        .icon-card {
+            background: #F9FAFB;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            border: 2px solid #E5E7EB;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .icon-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+        
+        .icon-card h3 {
+            color: #374151;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+        
+        .icon-preview {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border: 1px solid #E5E7EB;
+        }
+        
+        .icon-sizes {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .size-demo {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .size-label {
+            font-size: 0.8rem;
+            color: #6B7280;
+            font-weight: 500;
+        }
+        
+        .download-btn {
+            background: linear-gradient(135deg, #3B82F6, #1E40AF);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: transform 0.2s ease;
+        }
+        
+        .download-btn:hover {
+            transform: scale(1.05);
+        }
+        
+        .instructions {
+            background: #EFF6FF;
+            border: 2px solid #DBEAFE;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 30px;
+        }
+        
+        .instructions h3 {
+            color: #1E40AF;
+            margin-top: 0;
+        }
+        
+        .instructions ol {
+            color: #374151;
+            line-height: 1.6;
+        }
+        
+        .avatar-showcase {
+            background: linear-gradient(135deg, #1E40AF, #3B82F6);
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .avatar-showcase h2 {
+            margin-bottom: 20px;
+            font-size: 2rem;
+        }
+        
+        .avatar-showcase p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 Personal Recruiter Extension Icons</h1>
+        
+        <div class="avatar-showcase">
+            <h2>Meet Your Personal AI Recruiter</h2>
+            <p>A professional, friendly recruiter avatar who helps track your job applications with AI-powered insights and comprehensive management tools.</p>
+            <div style="margin: 20px 0;">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="120" height="120">
+                    <defs>
+                        <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#FFFFFF;stop-opacity:0.2" />
+                            <stop offset="100%" style="stop-color:#FFFFFF;stop-opacity:0.1" />
+                        </linearGradient>
+                        <linearGradient id="skinGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#FBBF24;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#F59E0B;stop-opacity:1" />
+                        </linearGradient>
+                        <linearGradient id="suitGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#374151;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#1F2937;stop-opacity:1" />
+                        </linearGradient>
+                    </defs>
+                    
+                    <circle cx="64" cy="64" r="60" fill="url(#bgGradient)" stroke="rgba(255,255,255,0.3)" stroke-width="3"/>
+                    
+                    <!-- Recruiter Body -->
+                    <path d="M 35 85 Q 35 78 42 75 L 50 72 Q 64 68 78 72 L 86 75 Q 93 78 93 85 L 93 120 Q 93 125 88 125 L 40 125 Q 35 125 35 120 Z" fill="url(#suitGradient)"/>
+                    <path d="M 48 75 Q 64 71 80 75 L 80 125 L 48 125 Z" fill="white"/>
+                    <path d="M 62 75 Q 64 75 66 75 L 68 85 Q 68 95 66 105 Q 64 110 62 105 Q 60 95 60 85 Z" fill="#DC2626"/>
+                    
+                    <!-- Head -->
+                    <ellipse cx="64" cy="70" rx="8" ry="6" fill="url(#skinGradient)"/>
+                    <circle cx="64" cy="50" r="22" fill="url(#skinGradient)"/>
+                    <path d="M 42 45 Q 42 28 64 25 Q 86 28 86 45 Q 86 35 82 38 Q 78 35 74 38 Q 70 35 64 35 Q 58 35 54 38 Q 50 35 46 38 Q 42 35 42 45 Z" fill="#8B4513"/>
+                    
+                    <!-- Eyes with glasses -->
+                    <ellipse cx="56" cy="47" rx="3" ry="2.5" fill="white"/>
+                    <ellipse cx="72" cy="47" rx="3" ry="2.5" fill="white"/>
+                    <circle cx="56" cy="47" r="1.5" fill="#1F2937"/>
+                    <circle cx="72" cy="47" r="1.5" fill="#1F2937"/>
+                    <circle cx="56" cy="47" r="8" fill="none" stroke="#374151" stroke-width="2"/>
+                    <circle cx="72" cy="47" r="8" fill="none" stroke="#374151" stroke-width="2"/>
+                    <path d="M 64 47 L 68 47" stroke="#374151" stroke-width="2"/>
+                    
+                    <!-- Smile -->
+                    <path d="M 59 58 Q 64 62 69 58" stroke="#D97706" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+                    
+                    <!-- Clipboard -->
+                    <g transform="translate(90, 35)">
+                        <rect x="0" y="0" width="16" height="20" rx="2" fill="#FBBF24"/>
+                        <rect x="2" y="2" width="12" height="16" rx="1" fill="white"/>
+                        <rect x="4" y="5" width="1" height="1" fill="#10B981"/>
+                        <rect x="6" y="5" width="6" height="0.5" fill="#374151"/>
+                        <rect x="4" y="8" width="1" height="1" fill="#10B981"/>
+                        <rect x="6" y="8" width="5" height="0.5" fill="#374151"/>
+                    </g>
+                </svg>
+            </div>
+        </div>
+        
+        <div class="icon-grid">
+            <div class="icon-card">
+                <h3>📋 Professional Recruiter Icon</h3>
+                <div class="icon-preview">
+                    <div class="icon-sizes">
+                        <div class="size-demo">
+                            <div class="size-label">16×16</div>
+                            <canvas id="recruiter-16" width="16" height="16" style="border: 1px solid #ddd; image-rendering: pixelated;"></canvas>
+                        </div>
+                        <div class="size-demo">
+                            <div class="size-label">32×32</div>
+                            <canvas id="recruiter-32" width="32" height="32" style="border: 1px solid #ddd;"></canvas>
+                        </div>
+                        <div class="size-demo">
+                            <div class="size-label">48×48</div>
+                            <canvas id="recruiter-48" width="48" height="48" style="border: 1px solid #ddd;"></canvas>
+                        </div>
+                        <div class="size-demo">
+                            <div class="size-label">128×128</div>
+                            <canvas id="recruiter-128" width="128" height="128" style="border: 1px solid #ddd;"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <button class="download-btn" onclick="downloadAllSizes('recruiter')">Download All Sizes</button>
+            </div>
+            
+            <div class="icon-card">
+                <h3>✨ Alternative Document Icon</h3>
+                <div class="icon-preview">
+                    <div class="icon-sizes">
+                        <div class="size-demo">
+                            <div class="size-label">16×16</div>
+                            <canvas id="document-16" width="16" height="16" style="border: 1px solid #ddd; image-rendering: pixelated;"></canvas>
+                        </div>
+                        <div class="size-demo">
+                            <div class="size-label">32×32</div>
+                            <canvas id="document-32" width="32" height="32" style="border: 1px solid #ddd;"></canvas>
+                        </div>
+                        <div class="size-demo">
+                            <div class="size-label">48×48</div>
+                            <canvas id="document-48" width="48" height="48" style="border: 1px solid #ddd;"></canvas>
+                        </div>
+                        <div class="size-demo">
+                            <div class="size-label">128×128</div>
+                            <canvas id="document-128" width="128" height="128" style="border: 1px solid #ddd;"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <button class="download-btn" onclick="downloadAllSizes('document')">Download All Sizes</button>
+            </div>
+        </div>
+        
+        <div class="instructions">
+            <h3>📥 How to Save Icons for Your Extension</h3>
+            <ol>
+                <li><strong>Click "Download All Sizes"</strong> for your preferred icon design</li>
+                <li><strong>Save the files</strong> to your extension's <code>icons/</code> folder with these names:
+                    <ul>
+                        <li><code>icon16.png</code> (16×16 pixels)</li>
+                        <li><code>icon32.png</code> (32×32 pixels)</li>
+                        <li><code>icon48.png</code> (48×48 pixels)</li>
+                        <li><code>icon128.png</code> (128×128 pixels)</li>
+                    </ul>
+                </li>
+                <li><strong>Update manifest.json</strong> to reference these new icons</li>
+                <li><strong>Reload your extension</strong> in Chrome to see the new icons</li>
+                <li><strong>For Chrome Web Store:</strong> Use the 128×128 version as your store icon</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        // SVG content for recruiter icon
+        const recruiterSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+            <defs>
+                <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#1E40AF;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#3B82F6;stop-opacity:1" />
+                </linearGradient>
+                <linearGradient id="skinGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#FBBF24;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#F59E0B;stop-opacity:1" />
+                </linearGradient>
+                <linearGradient id="suitGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#374151;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#1F2937;stop-opacity:1" />
+                </linearGradient>
+            </defs>
+            <circle cx="64" cy="64" r="60" fill="url(#bgGradient)" stroke="#1E3A8A" stroke-width="3"/>
+            <path d="M 35 85 Q 35 78 42 75 L 50 72 Q 64 68 78 72 L 86 75 Q 93 78 93 85 L 93 120 Q 93 125 88 125 L 40 125 Q 35 125 35 120 Z" fill="url(#suitGradient)"/>
+            <path d="M 48 75 Q 64 71 80 75 L 80 125 L 48 125 Z" fill="white"/>
+            <path d="M 62 75 Q 64 75 66 75 L 68 85 Q 68 95 66 105 Q 64 110 62 105 Q 60 95 60 85 Z" fill="#DC2626"/>
+            <ellipse cx="64" cy="70" rx="8" ry="6" fill="url(#skinGradient)"/>
+            <circle cx="64" cy="50" r="22" fill="url(#skinGradient)" stroke="#D97706" stroke-width="1"/>
+            <path d="M 42 45 Q 42 28 64 25 Q 86 28 86 45 Q 86 35 82 38 Q 78 35 74 38 Q 70 35 64 35 Q 58 35 54 38 Q 50 35 46 38 Q 42 35 42 45 Z" fill="#8B4513"/>
+            <ellipse cx="56" cy="47" rx="3" ry="2.5" fill="white"/>
+            <ellipse cx="72" cy="47" rx="3" ry="2.5" fill="white"/>
+            <circle cx="56" cy="47" r="1.5" fill="#1F2937"/>
+            <circle cx="72" cy="47" r="1.5" fill="#1F2937"/>
+            <circle cx="56" cy="47" r="8" fill="none" stroke="#374151" stroke-width="2"/>
+            <circle cx="72" cy="47" r="8" fill="none" stroke="#374151" stroke-width="2"/>
+            <path d="M 64 47 L 68 47" stroke="#374151" stroke-width="2"/>
+            <path d="M 59 58 Q 64 62 69 58" stroke="#D97706" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+            <g transform="translate(90, 35)">
+                <rect x="0" y="0" width="16" height="20" rx="2" fill="#FBBF24" stroke="#F59E0B" stroke-width="1"/>
+                <rect x="2" y="2" width="12" height="16" rx="1" fill="white"/>
+                <rect x="4" y="5" width="1" height="1" fill="#10B981"/>
+                <rect x="6" y="5" width="6" height="0.5" fill="#374151"/>
+                <rect x="4" y="8" width="1" height="1" fill="#10B981"/>
+                <rect x="6" y="8" width="5" height="0.5" fill="#374151"/>
+                <rect x="4" y="11" width="1" height="1" fill="#F59E0B"/>
+                <rect x="6" y="11" width="7" height="0.5" fill="#374151"/>
+            </g>
+        </svg>`;
+
+        // SVG content for document icon
+        const documentSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+            <defs>
+                <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#4F46E5;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#7C3AED;stop-opacity:1" />
+                </linearGradient>
+                <linearGradient id="documentGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#FFFFFF;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#F8FAFC;stop-opacity:1" />
+                </linearGradient>
+                <linearGradient id="checkGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#10B981;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#059669;stop-opacity:1" />
+                </linearGradient>
+            </defs>
+            <circle cx="64" cy="64" r="60" fill="url(#bgGradient)" stroke="#312E81" stroke-width="2"/>
+            <rect x="32" y="24" width="48" height="64" rx="4" ry="4" fill="url(#documentGradient)" stroke="#E2E8F0" stroke-width="1"/>
+            <rect x="38" y="32" width="24" height="2" rx="1" fill="#64748B"/>
+            <rect x="38" y="38" width="30" height="2" rx="1" fill="#64748B"/>
+            <rect x="38" y="44" width="20" height="2" rx="1" fill="#64748B"/>
+            <rect x="38" y="52" width="28" height="2" rx="1" fill="#64748B"/>
+            <rect x="38" y="58" width="26" height="2" rx="1" fill="#64748B"/>
+            <rect x="38" y="64" width="24" height="2" rx="1" fill="#64748B"/>
+            <circle cx="68" cy="74" r="8" fill="url(#checkGradient)"/>
+            <path d="M64 74 L66.5 76.5 L72 71" stroke="white" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M84 28 L86 33 L91 35 L86 37 L84 42 L82 37 L77 35 L82 33 Z" fill="#FCD34D" opacity="0.9"/>
+        </svg>`;
+
+        function svgToCanvas(svgString, canvas, size) {
+            const ctx = canvas.getContext('2d');
+            const img = new Image();
+            
+            img.onload = function() {
+                ctx.clearRect(0, 0, size, size);
+                ctx.drawImage(img, 0, 0, size, size);
+            };
+            
+            const blob = new Blob([svgString], {type: 'image/svg+xml'});
+            const url = URL.createObjectURL(blob);
+            img.src = url;
+            
+            // Clean up the blob URL after a short delay
+            setTimeout(() => URL.revokeObjectURL(url), 100);
+        }
+
+        function downloadCanvas(canvas, filename) {
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        function downloadAllSizes(iconType) {
+            const svgContent = iconType === 'recruiter' ? recruiterSVG : documentSVG;
+            const sizes = [16, 32, 48, 128];
+            
+            sizes.forEach(size => {
+                const canvas = document.getElementById(`${iconType}-${size}`);
+                setTimeout(() => {
+                    downloadCanvas(canvas, `icon${size}.png`);
+                }, size * 10); // Stagger downloads slightly
+            });
+        }
+
+        // Initialize canvases when page loads
+        window.addEventListener('load', function() {
+            const sizes = [16, 32, 48, 128];
+            
+            sizes.forEach(size => {
+                const recruiterCanvas = document.getElementById(`recruiter-${size}`);
+                const documentCanvas = document.getElementById(`document-${size}`);
+                
+                if (recruiterCanvas) {
+                    svgToCanvas(recruiterSVG, recruiterCanvas, size);
+                }
+                
+                if (documentCanvas) {
+                    svgToCanvas(documentSVG, documentCanvas, size);
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,119 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <!-- Gradients for depth and professional look -->
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1E40AF;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#3B82F6;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="skinGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FBBF24;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#F59E0B;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="suitGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#374151;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1F2937;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="shirtGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFFFFF;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#F3F4F6;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="tieGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#DC2626;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#B91C1C;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background circle -->
+  <circle cx="64" cy="64" r="60" fill="url(#bgGradient)" stroke="#1E3A8A" stroke-width="3"/>
+  
+  <!-- Recruiter Body (suit jacket) -->
+  <path d="M 35 85 Q 35 78 42 75 L 50 72 Q 64 68 78 72 L 86 75 Q 93 78 93 85 L 93 120 Q 93 125 88 125 L 40 125 Q 35 125 35 120 Z" fill="url(#suitGradient)"/>
+  
+  <!-- White shirt -->
+  <path d="M 48 75 Q 64 71 80 75 L 80 125 L 48 125 Z" fill="url(#shirtGradient)"/>
+  
+  <!-- Tie -->
+  <path d="M 62 75 Q 64 75 66 75 L 68 85 Q 68 95 66 105 Q 64 110 62 105 Q 60 95 60 85 Z" fill="url(#tieGradient)"/>
+  
+  <!-- Tie pattern (diagonal stripes) -->
+  <path d="M 61 78 L 67 78" stroke="#FBBF24" stroke-width="0.5" opacity="0.7"/>
+  <path d="M 60.5 82 L 67.5 82" stroke="#FBBF24" stroke-width="0.5" opacity="0.7"/>
+  <path d="M 60 86 L 68 86" stroke="#FBBF24" stroke-width="0.5" opacity="0.7"/>
+  <path d="M 60.5 90 L 67.5 90" stroke="#FBBF24" stroke-width="0.5" opacity="0.7"/>
+  <path d="M 61 94 L 67 94" stroke="#FBBF24" stroke-width="0.5" opacity="0.7"/>
+  
+  <!-- Suit lapels -->
+  <path d="M 48 75 Q 52 73 56 75 L 54 82 Q 50 80 48 82 Z" fill="#4B5563"/>
+  <path d="M 80 75 Q 76 73 72 75 L 74 82 Q 78 80 80 82 Z" fill="#4B5563"/>
+  
+  <!-- Head (neck) -->
+  <ellipse cx="64" cy="70" rx="8" ry="6" fill="url(#skinGradient)"/>
+  
+  <!-- Head (face) -->
+  <circle cx="64" cy="50" r="22" fill="url(#skinGradient)" stroke="#D97706" stroke-width="1"/>
+  
+  <!-- Hair -->
+  <path d="M 42 45 Q 42 28 64 25 Q 86 28 86 45 Q 86 35 82 38 Q 78 35 74 38 Q 70 35 64 35 Q 58 35 54 38 Q 50 35 46 38 Q 42 35 42 45 Z" fill="#8B4513"/>
+  
+  <!-- Eyes -->
+  <ellipse cx="56" cy="47" rx="3" ry="2.5" fill="white"/>
+  <ellipse cx="72" cy="47" rx="3" ry="2.5" fill="white"/>
+  <circle cx="56" cy="47" r="1.5" fill="#1F2937"/>
+  <circle cx="72" cy="47" r="1.5" fill="#1F2937"/>
+  <circle cx="56.5" cy="46.5" r="0.5" fill="white"/>
+  <circle cx="72.5" cy="46.5" r="0.5" fill="white"/>
+  
+  <!-- Eyebrows -->
+  <path d="M 52 43 Q 56 41 60 43" stroke="#8B4513" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <path d="M 68 43 Q 72 41 76 43" stroke="#8B4513" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  
+  <!-- Nose -->
+  <path d="M 64 50 Q 63 52 64 54 Q 65 52 64 50" stroke="#D97706" stroke-width="1" fill="none"/>
+  
+  <!-- Mouth (friendly smile) -->
+  <path d="M 59 58 Q 64 62 69 58" stroke="#D97706" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  
+  <!-- Glasses (professional look) -->
+  <circle cx="56" cy="47" r="8" fill="none" stroke="#374151" stroke-width="2"/>
+  <circle cx="72" cy="47" r="8" fill="none" stroke="#374151" stroke-width="2"/>
+  <path d="M 64 47 L 68 47" stroke="#374151" stroke-width="2"/>
+  <path d="M 48 45 Q 46 45 46 47" stroke="#374151" stroke-width="2" fill="none"/>
+  <path d="M 80 45 Q 82 45 82 47" stroke="#374151" stroke-width="2" fill="none"/>
+  
+  <!-- Clipboard with checklist (recruiter's tool) -->
+  <g transform="translate(90, 35)">
+    <rect x="0" y="0" width="16" height="20" rx="2" fill="#FBBF24" stroke="#F59E0B" stroke-width="1"/>
+    <rect x="2" y="2" width="12" height="16" rx="1" fill="white"/>
+    
+    <!-- Clipboard clip -->
+    <rect x="6" y="-1" width="4" height="3" rx="0.5" fill="#6B7280"/>
+    
+    <!-- Checklist items -->
+    <rect x="4" y="5" width="1" height="1" fill="#10B981"/>
+    <rect x="6" y="5" width="6" height="0.5" fill="#374151"/>
+    
+    <rect x="4" y="8" width="1" height="1" fill="#10B981"/>
+    <rect x="6" y="8" width="5" height="0.5" fill="#374151"/>
+    
+    <rect x="4" y="11" width="1" height="1" fill="#F59E0B"/>
+    <rect x="6" y="11" width="7" height="0.5" fill="#374151"/>
+    
+    <rect x="4" y="14" width="1" height="1" fill="#6B7280"/>
+    <rect x="6" y="14" width="4" height="0.5" fill="#374151"/>
+  </g>
+  
+  <!-- AI Magic sparkles around the recruiter -->
+  <g opacity="0.8">
+    <path d="M25 30 L27 35 L32 37 L27 39 L25 44 L23 39 L18 37 L23 35 Z" fill="#FBBF24"/>
+    <path d="M100 70 L101.5 73 L104.5 74.5 L101.5 76 L100 79 L98.5 76 L95.5 74.5 L98.5 73 Z" fill="#F59E0B"/>
+    <circle cx="20" cy="70" r="1.5" fill="#FBBF24"/>
+    <circle cx="108" cy="45" r="1" fill="#F59E0B"/>
+  </g>
+  
+  <!-- Briefcase icon (small) -->
+  <g transform="translate(15, 95)">
+    <rect x="0" y="3" width="12" height="8" rx="1" fill="#374151"/>
+    <rect x="1" y="1" width="10" height="3" rx="0.5" fill="#6B7280"/>
+    <circle cx="6" cy="7" r="1" fill="#9CA3AF"/>
+  </g>
+</svg>
