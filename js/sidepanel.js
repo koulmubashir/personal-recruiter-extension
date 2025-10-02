@@ -55,6 +55,9 @@ class SidePanelController {
 
     // Loading
     this.loadingOverlay = document.getElementById('loadingOverlay');
+    
+    // Toast container
+    this.toastContainer = document.getElementById('toastContainer');
   }
 
   setupEventListeners() {
@@ -242,6 +245,13 @@ class SidePanelController {
       if (response && response.success) {
         this.applications = response.data || [];
         console.log('✅ Loaded applications:', this.applications.length);
+        
+        // If no applications exist, create some sample data for testing
+        if (this.applications.length === 0) {
+          console.log('No applications found, creating sample data...');
+          await this.createSampleData();
+        }
+        
         this.updateStats();
         this.renderRecentApplications();
         this.renderHistoryApplications();
@@ -250,6 +260,60 @@ class SidePanelController {
       }
     } catch (error) {
       console.error('❌ Load applications error:', error);
+    }
+  }
+
+  async createSampleData() {
+    const sampleApplications = [
+      {
+        id: Date.now().toString(),
+        timestamp: new Date().toISOString(),
+        jobTitle: 'Senior Frontend Developer',
+        company: 'TechCorp Inc.',
+        status: 'Applied',
+        url: 'https://example.com/job1',
+        jobId: 'TC-001',
+        notes: 'Applied through company website',
+        manual: true
+      },
+      {
+        id: (Date.now() + 1).toString(),
+        timestamp: new Date(Date.now() - 86400000).toISOString(),
+        jobTitle: 'Full Stack Engineer',
+        company: 'StartupXYZ',
+        status: 'In Review',
+        url: 'https://example.com/job2',
+        jobId: 'SXY-002',
+        notes: 'Recruiter reached out on LinkedIn',
+        manual: true
+      },
+      {
+        id: (Date.now() + 2).toString(),
+        timestamp: new Date(Date.now() - 172800000).toISOString(),
+        jobTitle: 'React Developer',
+        company: 'Digital Agency',
+        status: 'Interview Scheduled',
+        url: 'https://example.com/job3',
+        jobId: 'DA-003',
+        notes: 'Phone interview next Tuesday',
+        manual: true
+      }
+    ];
+
+    try {
+      for (const app of sampleApplications) {
+        await this.sendMessage({
+          action: 'saveJobApplication',
+          data: app
+        });
+      }
+      console.log('✅ Sample data created');
+      this.showToast('Sample job applications created for testing', 'success');
+      
+      // Reload applications
+      setTimeout(() => this.loadApplications(), 500);
+    } catch (error) {
+      console.error('Failed to create sample data:', error);
     }
   }
 
@@ -424,13 +488,40 @@ class SidePanelController {
   }
 
   showSuccess(message) {
-    // Simple alert for now - could be enhanced with a toast notification
-    alert('✅ ' + message);
+    this.showToast(message, 'success');
   }
 
   showError(message) {
-    alert('❌ ' + message);
+    this.showToast(message, 'error');
     console.error('Error:', message);
+  }
+
+  showToast(message, type = 'success') {
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    
+    const icon = type === 'success' ? '✅' : '❌';
+    
+    toast.innerHTML = `
+      <span class="toast-icon">${icon}</span>
+      <span class="toast-message">${message}</span>
+      <button class="toast-close" onclick="this.parentElement.remove()">×</button>
+    `;
+    
+    this.toastContainer.appendChild(toast);
+    
+    // Trigger animation
+    setTimeout(() => toast.classList.add('show'), 10);
+    
+    // Auto-remove after 3 seconds
+    setTimeout(() => {
+      toast.classList.remove('show');
+      setTimeout(() => {
+        if (toast.parentElement) {
+          toast.remove();
+        }
+      }, 300);
+    }, 3000);
   }
 
   sendMessage(message) {

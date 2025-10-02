@@ -101,6 +101,11 @@ class HistoryController {
     this.showLoading();
     
     try {
+      // First, let's try to check storage directly
+      chrome.storage.sync.get(['jobApplications'], (result) => {
+        console.log('Direct storage check:', result);
+      });
+      
       console.log('Sending getJobApplications message...');
       const response = await this.sendMessage({ action: 'getJobApplications' });
       console.log('History page response:', response);
@@ -198,7 +203,7 @@ class HistoryController {
     this.filteredApplications = filtered;
     this.sortApplications();
     this.currentPage = 1;
-    this.renderTable();
+    this.renderApplications();
     this.updatePagination();
   }
 
@@ -250,7 +255,7 @@ class HistoryController {
     icon.textContent = this.sortDirection === 'asc' ? '↑' : '↓';
     
     this.sortApplications();
-    this.renderTable();
+    this.renderApplications();
   }
 
   renderApplications() {
@@ -329,7 +334,7 @@ class HistoryController {
     
     if (page >= 1 && page <= totalPages) {
       this.currentPage = page;
-      this.renderTable();
+      this.renderApplications();
       this.updatePagination();
     }
   }
