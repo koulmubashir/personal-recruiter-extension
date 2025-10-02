@@ -253,46 +253,64 @@ class HistoryController {
     this.renderTable();
   }
 
-  renderTable() {
+  renderApplications() {
     const startIndex = (this.currentPage - 1) * this.pageSize;
     const endIndex = startIndex + this.pageSize;
     const pageApplications = this.filteredApplications.slice(startIndex, endIndex);
-    
-    if (pageApplications.length === 0) {
-      this.applicationsTable.style.display = 'none';
-      this.noResults.style.display = 'block';
-      return;
-    }
-    
-    this.applicationsTable.style.display = 'table';
-    this.noResults.style.display = 'none';
-    
+
     this.applicationsBody.innerHTML = pageApplications.map(app => `
-      <tr data-id="${app.id}">
-        <td>${new Date(app.timestamp).toLocaleDateString()}</td>
+      <tr>
+        <td>${this.formatDate(app.timestamp)}</td>
         <td>
-          <div style="font-weight: 500;">${app.jobTitle || 'Unknown Position'}</div>
-          ${app.notes ? `<div style="font-size: 12px; color: #666; margin-top: 4px;">${app.notes.substring(0, 50)}${app.notes.length > 50 ? '...' : ''}</div>` : ''}
+          <div class="job-title">
+            ${app.jobTitle || 'Unknown Position'}
+            ${app.manual ? '<span class="manual-tag">Manual</span>' : ''}
+          </div>
         </td>
         <td>${app.company || 'Unknown Company'}</td>
         <td>
-          <span class="status-badge status-${(app.status || 'applied').toLowerCase().replace(' ', '-')}">
+          <span class="status ${(app.status || 'Applied').toLowerCase().replace(' ', '-')}">
             ${app.status || 'Applied'}
           </span>
         </td>
         <td>${app.jobId || '-'}</td>
         <td>
           <div class="action-buttons">
-            ${app.url ? `<button class="action-btn view" onclick="historyController.openJobUrl('${app.url}')">View</button>` : ''}
-            <button class="action-btn edit" onclick="historyController.editApplication('${app.id}')">Edit</button>
-            <button class="action-btn delete" onclick="historyController.deleteApplication('${app.id}')">Delete</button>
+            ${app.url ? `<button class="action-btn view" data-action="view" data-url="${app.url}">View</button>` : ''}
+            <button class="action-btn edit" data-action="edit" data-id="${app.id}">Edit</button>
+            <button class="action-btn delete" data-action="delete" data-id="${app.id}">Delete</button>
           </div>
         </td>
       </tr>
     `).join('');
+    
+    // Add event listeners for action buttons
+    this.setupActionButtonListeners();
   }
 
-  updatePagination() {
+  setupActionButtonListeners() {
+    // Remove any existing listeners to prevent duplicates
+    const actionButtons = this.applicationsBody.querySelectorAll('.action-btn');
+    actionButtons.forEach(button => {
+      button.addEventListener('click', (e) => {
+        const action = e.target.dataset.action;
+        const id = e.target.dataset.id;
+        const url = e.target.dataset.url;
+        
+        switch(action) {
+          case 'view':
+            if (url) this.openJobUrl(url);
+            break;
+          case 'edit':
+            if (id) this.editApplication(id);
+            break;
+          case 'delete':
+            if (id) this.deleteApplication(id);
+            break;
+        }
+      });
+    });
+  }  updatePagination() {
     const totalPages = Math.ceil(this.filteredApplications.length / this.pageSize);
     
     if (totalPages <= 1) {
@@ -360,12 +378,18 @@ class HistoryController {
         this.applications[index] = { ...this.applications[index], ...updatedData };
       }
       
-      // Save to storage
-      await chrome.storage.sync.set({ jobApplications: this.applications });
-      
-      this.hideEditModal();
-      this.applyFilters();
-      this.updateStats();
+      // Save to storage using callback approach
+      chrome.storage.sync.set({ jobApplications: this.applications }, () => {
+        if (chrome.runtime.lastError) {
+          console.error('Failed to save edited application:', chrome.runtime.lastError);
+          this.showError('Failed to save changes');
+        } else {
+          console.log('Application updated successfully');
+          this.hideEditModal();
+          this.applyFilters();
+          this.updateStats();
+        }
+      });
     } catch (error) {
       console.error('Failed to save edited application:', error);
       this.showError('Failed to save changes');
@@ -519,4 +543,6 @@ class HistoryController {
 let historyController;
 document.addEventListener('DOMContentLoaded', () => {
   historyController = new HistoryController();
+  // Make it globally accessible for debugging
+  window.historyController = historyController;
 });
