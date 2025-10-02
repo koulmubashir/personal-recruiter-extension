@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Personal Recruiter - Job Application Tracker",
   "version": "1.0.0",
-  "description": "Track your job applications across various job boards and company career pages with automatic detection and Google account integration.",
+  "description": "Track job applications across job boards and career pages with AI-powered automatic detection and Google account integration.",
   "permissions": [
     "storage",
     "activeTab",
