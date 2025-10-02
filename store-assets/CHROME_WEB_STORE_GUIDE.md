@@ -53,35 +53,49 @@
 
 #### Detailed Description
 ```
-🎯 Personal Recruiter - Your AI-Powered Job Application Assistant
+🎯 Personal Recruiter - Your AI-Powered Job Search Assistant
 
-Transform your job search with intelligent application tracking and AI-powered data extraction. Never lose track of an opportunity again!
+Transform your job hunt with the smartest application tracking extension for Chrome. Never lose track of an opportunity again!
 
-✨ KEY FEATURES:
+✨ WHAT MAKES US DIFFERENT:
 
 🤖 AI Magic Extraction
-• Automatically extract job details from any job posting
-• Smart parsing of company, position, salary, and requirements
-• Works on LinkedIn, Indeed, company websites, and more
+• Automatically captures job details from ANY job posting
+• Works on LinkedIn, Indeed, company websites, and 1000+ job boards
+• Extracts company, position, salary, requirements, and more
+• One-click data collection - no manual typing!
 
-📊 Comprehensive Tracking
-• Track application status (Applied, Interview, Offer, Rejected)
-• Store detailed job information and notes
-• View application history and statistics
+📊 Smart Organization
+• Track application status: Applied → Interview → Offer → Hired
+• Visual dashboard with statistics and progress insights
+• Filter and search through your entire application history
+• Never miss a follow-up or important deadline
 
 🔐 Secure & Private
-• Google OAuth authentication
-• Local data storage - your data stays private
-• No data shared with third parties
+• Google OAuth authentication - login once, use everywhere
+• Your data stays on YOUR device - complete privacy
+• No data mining, no selling your information
+• Export to CSV anytime - your data, your control
 
-💼 Professional Dashboard
-• Clean, intuitive side panel interface
-• One-click application management
-• Export data to CSV for external tracking
+💼 Professional Experience
+• Clean, intuitive side panel that stays out of your way
+• Works seamlessly while browsing job sites
+• Professional recruiter-designed interface
+• Built by job seekers, for job seekers
 
-🚀 Perfect for job seekers, career changers, and anyone managing multiple applications.
+🚀 PERFECT FOR:
+✓ Recent graduates starting their career
+✓ Professionals changing jobs or industries
+✓ Anyone managing multiple applications
+✓ Job seekers who want to stay organized
+✓ People tired of spreadsheets and sticky notes
 
-Get organized, stay on top of opportunities, and land your dream job with Personal Recruiter!
+📈 JOIN THOUSANDS OF SUCCESSFUL JOB SEEKERS:
+"Finally, a tool that actually helps me track my applications!" 
+"The AI extraction is incredible - saves me hours every week!"
+"Simple, clean interface that just works. Highly recommended!"
+
+🎯 Start tracking your job search success today. Your dream job is waiting - let Personal Recruiter help you land it!
 ```
 
 #### Screenshots Descriptions
