@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generate Personal Recruiter Promo Tiles</title>
+</head>
+<body>
+    <h1>Generating Personal Recruiter Promotional Tiles...</h1>
+    
+    <!-- Small Promo Tile Canvas (440x280) -->
+    <canvas id="smallPromoCanvas" width="440" height="280" style="border: 1px solid #ccc; margin: 10px;"></canvas>
+    <br>
+    <label>Small Promo Tile (440x280) - Required</label>
+    
+    <!-- Marquee Promo Tile Canvas (1400x560) -->
+    <canvas id="marqueeCanvas" width="1400" height="560" style="border: 1px solid #ccc; margin: 10px; max-width: 100%;"></canvas>
+    <br>
+    <label>Marquee Promo Tile (1400x560) - Optional</label>
+    
+    <div style="margin: 20px 0;">
+        <button onclick="downloadSmallPromo()" style="background: #28a745; color: white; padding: 15px 30px; border: none; border-radius: 5px; font-size: 16px; margin: 10px; cursor: pointer;">
+            📥 Download Small Promo (440x280)
+        </button>
+        <button onclick="downloadMarquee()" style="background: #007bff; color: white; padding: 15px 30px; border: none; border-radius: 5px; font-size: 16px; margin: 10px; cursor: pointer;">
+            📥 Download Marquee (1400x560)
+        </button>
+        <button onclick="downloadBoth()" style="background: #6f42c1; color: white; padding: 15px 30px; border: none; border-radius: 5px; font-size: 16px; margin: 10px; cursor: pointer;">
+            📦 Download Both
+        </button>
+    </div>
+
+    <script>
+        // Professional color scheme
+        const colors = {
+            primary: '#1a73e8',      // Modern blue
+            secondary: '#34a853',    // Green accent
+            text: '#ffffff',         // White text
+            badge: '#ff6b35',        // Orange accent
+            background: '#2c3e50'    // Dark background for contrast
+        };
+
+        function createGradient(ctx, width, height, color1, color2) {
+            const gradient = ctx.createLinearGradient(0, 0, width, height);
+            gradient.addColorStop(0, color1);
+            gradient.addColorStop(1, color2);
+            return gradient;
+        }
+
+        function drawIcon(ctx, x, y, size, color) {
+            ctx.save();
+            
+            // Draw a modern briefcase/AI icon combination
+            ctx.fillStyle = color;
+            
+            // Briefcase base
+            ctx.fillRect(x + size * 0.2, y + size * 0.4, size * 0.6, size * 0.4);
+            
+            // Briefcase handle
+            ctx.fillRect(x + size * 0.35, y + size * 0.3, size * 0.3, size * 0.15);
+            
+            // AI circuit pattern
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            
+            // Circuit lines
+            for (let i = 0; i < 3; i++) {
+                const lineY = y + size * 0.5 + i * size * 0.08;
+                ctx.moveTo(x + size * 0.25, lineY);
+                ctx.lineTo(x + size * 0.75, lineY);
+                
+                // Circuit nodes
+                ctx.beginPath();
+                ctx.arc(x + size * 0.3 + i * size * 0.2, lineY, 2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            ctx.restore();
+        }
+
+        function drawBadge(ctx, x, y, text, bgColor, textColor) {
+            ctx.save();
+            
+            // Badge background with rounded corners
+            ctx.fillStyle = bgColor;
+            ctx.fillRect(x, y, 100, 25);
+            
+            // Badge text
+            ctx.fillStyle = textColor;
+            ctx.font = 'bold 11px Arial, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(text, x + 50, y + 16);
+            
+            ctx.restore();
+        }
+
+        function generateSmallPromo() {
+            const canvas = document.getElementById('smallPromoCanvas');
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width;
+            const height = canvas.height;
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, width, height);
+            
+            // Background gradient
+            const bgGradient = createGradient(ctx, width, height, colors.primary, colors.background);
+            ctx.fillStyle = bgGradient;
+            ctx.fillRect(0, 0, width, height);
+            
+            // Subtle overlay pattern
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+            for (let i = 0; i < width; i += 60) {
+                for (let j = 0; j < height; j += 60) {
+                    ctx.fillRect(i, j, 30, 30);
+                }
+            }
+            
+            // Main icon
+            drawIcon(ctx, 30, 40, 80, colors.text);
+            
+            // Main title
+            ctx.fillStyle = colors.text;
+            ctx.font = 'bold 32px Arial, sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText('Personal Recruiter', 130, 70);
+            
+            // Subtitle
+            ctx.font = '18px Arial, sans-serif';
+            ctx.fillText('AI-Powered Job Tracking', 130, 95);
+            
+            // Tagline
+            ctx.font = '14px Arial, sans-serif';
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+            ctx.fillText('Never Miss an Opportunity', 130, 115);
+            
+            // AI-Powered badge
+            drawBadge(ctx, width - 110, 15, 'AI-POWERED', colors.badge, colors.text);
+            
+            // Bottom accent
+            ctx.fillStyle = colors.secondary;
+            ctx.fillRect(0, height - 8, width, 8);
+            
+            // Decorative elements
+            ctx.fillStyle = colors.secondary + '80';
+            for (let i = 0; i < 4; i++) {
+                ctx.beginPath();
+                ctx.arc(width - 40 - i * 20, height - 40, 5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            // Key features icons
+            const features = ['🎯', '🤖', '📊'];
+            ctx.font = '16px Arial, sans-serif';
+            ctx.fillStyle = colors.text;
+            for (let i = 0; i < features.length; i++) {
+                ctx.fillText(features[i], 30 + i * 30, height - 20);
+            }
+        }
+
+        function generateMarquee() {
+            const canvas = document.getElementById('marqueeCanvas');
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width;
+            const height = canvas.height;
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, width, height);
+            
+            // Background gradient
+            const bgGradient = createGradient(ctx, width, height, colors.primary, colors.background);
+            ctx.fillStyle = bgGradient;
+            ctx.fillRect(0, 0, width, height);
+            
+            // Subtle overlay pattern
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.03)';
+            for (let i = 0; i < width; i += 120) {
+                for (let j = 0; j < height; j += 120) {
+                    ctx.fillRect(i, j, 60, 60);
+                }
+            }
+            
+            // Large main icon
+            drawIcon(ctx, 80, 120, 200, colors.text);
+            
+            // Main title (larger for marquee)
+            ctx.fillStyle = colors.text;
+            ctx.font = 'bold 72px Arial, sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText('Personal Recruiter', 320, 180);
+            
+            // Subtitle
+            ctx.font = '42px Arial, sans-serif';
+            ctx.fillText('AI-Powered Job Application Tracking', 320, 230);
+            
+            // Tagline
+            ctx.font = '28px Arial, sans-serif';
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+            ctx.fillText('Transform Your Job Search with Smart Automation', 320, 270);
+            
+            // Feature highlights
+            const features = [
+                '🤖 AI Magic Extraction',
+                '📊 Smart Organization',
+                '🔐 Secure & Private',
+                '💼 Professional Design'
+            ];
+            
+            ctx.font = '24px Arial, sans-serif';
+            ctx.fillStyle = colors.text;
+            for (let i = 0; i < features.length; i++) {
+                const x = 320 + (i % 2) * 300;
+                const y = 320 + Math.floor(i / 2) * 40;
+                ctx.fillText(features[i], x, y);
+            }
+            
+            // AI-Powered badge (larger)
+            drawBadge(ctx, width - 200, 30, 'AI-POWERED', colors.badge, colors.text);
+            
+            // Bottom accent
+            ctx.fillStyle = colors.secondary;
+            ctx.fillRect(0, height - 15, width, 15);
+            
+            // Side accent
+            ctx.fillStyle = colors.secondary + '60';
+            ctx.fillRect(width - 10, 0, 10, height);
+            
+            // Decorative elements
+            ctx.fillStyle = colors.secondary + '40';
+            for (let i = 0; i < 8; i++) {
+                ctx.beginPath();
+                ctx.arc(width - 80 - i * 30, height - 80, 8, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function downloadCanvas(canvas, filename) {
+            // Create a temporary canvas to ensure white background (no alpha)
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = canvas.width;
+            tempCanvas.height = canvas.height;
+            const tempCtx = tempCanvas.getContext('2d');
+            
+            // Fill with white background
+            tempCtx.fillStyle = 'white';
+            tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+            
+            // Draw the promo design on top
+            tempCtx.drawImage(canvas, 0, 0);
+            
+            // Download as JPEG
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = tempCanvas.toDataURL('image/jpeg', 0.95);
+            link.click();
+        }
+
+        function downloadSmallPromo() {
+            const canvas = document.getElementById('smallPromoCanvas');
+            downloadCanvas(canvas, 'personal-recruiter-small-promo-440x280.jpg');
+        }
+
+        function downloadMarquee() {
+            const canvas = document.getElementById('marqueeCanvas');
+            downloadCanvas(canvas, 'personal-recruiter-marquee-promo-1400x560.jpg');
+        }
+
+        function downloadBoth() {
+            downloadSmallPromo();
+            setTimeout(() => downloadMarquee(), 1000); // Delay second download
+        }
+
+        // Generate both tiles on page load
+        window.onload = function() {
+            generateSmallPromo();
+            generateMarquee();
+            
+            // Auto-download both files after 2 seconds
+            setTimeout(() => {
+                console.log('Auto-downloading promotional tiles...');
+                downloadBoth();
+            }, 2000);
+        };
+    </script>
+</body>
+</html>
