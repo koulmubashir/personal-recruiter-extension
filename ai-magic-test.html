@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Magic Status Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 600px;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+        }
+        .available { background: #e8f5e8; border-color: #4caf50; }
+        .restricted { background: #ffebee; border-color: #f44336; }
+        .warning { background: #fff3e0; border-color: #ff9800; }
+        .button {
+            background: #4285f4;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .button:hover { background: #3367d6; }
+        .button:disabled { 
+            background: #ccc; 
+            cursor: not-allowed; 
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🪄 AI Magic Status Test</h1>
+        <p>This page tests the AI Magic button availability logic.</p>
+
+        <div id="currentStatus" class="status">
+            Checking current page status...
+        </div>
+
+        <div class="status">
+            <h3>Test Different Page Types:</h3>
+            <button class="button" onclick="testPageType('https://linkedin.com/jobs/view/123')">LinkedIn Job</button>
+            <button class="button" onclick="testPageType('https://indeed.com/job/abc')">Indeed Job</button>
+            <button class="button" onclick="testPageType('https://example.com/careers/developer')">Company Career Page</button>
+            <button class="button" onclick="testPageType('https://news.ycombinator.com')">News Site</button>
+            <button class="button" onclick="testPageType('chrome://extensions/')">Chrome Internal</button>
+            <button class="button" onclick="testPageType('chrome-extension://abcd/popup.html')">Extension Page</button>
+        </div>
+
+        <div id="testResults" class="status">
+            Test results will appear here...
+        </div>
+    </div>
+
+    <script>
+        function checkPageAvailability(url) {
+            const lowerUrl = url.toLowerCase();
+            
+            // Check restricted pages
+            if (lowerUrl.startsWith('chrome://') || 
+                lowerUrl.startsWith('chrome-extension://') || 
+                lowerUrl.startsWith('moz-extension://') ||
+                lowerUrl.startsWith('about:') ||
+                lowerUrl.startsWith('file://') ||
+                lowerUrl === 'chrome://newtab/' ||
+                lowerUrl === 'about:blank') {
+                return { available: false, reason: 'Restricted page type', type: 'restricted' };
+            }
+
+            // Check job-related patterns
+            const jobSitePatterns = [
+                'linkedin.com/jobs',
+                'indeed.com',
+                'glassdoor.com',
+                'monster.com',
+                'ziprecruiter.com',
+                'careerbuilder.com',
+                'dice.com',
+                'stackoverflow.com/jobs',
+                'remote.co',
+                'weworkremotely.com',
+                'flexjobs.com',
+                '/careers',
+                '/jobs',
+                '/employment',
+                '/hiring',
+                '/opportunities'
+            ];
+
+            const isJobRelated = jobSitePatterns.some(pattern => lowerUrl.includes(pattern));
+            
+            if (isJobRelated) {
+                return { available: true, reason: 'Job-related page detected', type: 'available' };
+            } else {
+                return { available: true, reason: 'General webpage (limited extraction)', type: 'warning' };
+            }
+        }
+
+        function updateCurrentStatus() {
+            const currentUrl = window.location.href;
+            const status = checkPageAvailability(currentUrl);
+            
+            const statusDiv = document.getElementById('currentStatus');
+            statusDiv.className = `status ${status.type}`;
+            statusDiv.innerHTML = `
+                <strong>Current Page:</strong> ${currentUrl}<br>
+                <strong>AI Magic Available:</strong> ${status.available ? '✅ Yes' : '❌ No'}<br>
+                <strong>Reason:</strong> ${status.reason}
+            `;
+        }
+
+        function testPageType(testUrl) {
+            const status = checkPageAvailability(testUrl);
+            const resultsDiv = document.getElementById('testResults');
+            
+            resultsDiv.className = `status ${status.type}`;
+            resultsDiv.innerHTML = `
+                <strong>Test URL:</strong> ${testUrl}<br>
+                <strong>AI Magic Available:</strong> ${status.available ? '✅ Yes' : '❌ No'}<br>
+                <strong>Reason:</strong> ${status.reason}<br>
+                <strong>Classification:</strong> ${status.type}
+            `;
+        }
+
+        // Check current page status on load
+        document.addEventListener('DOMContentLoaded', updateCurrentStatus);
+    </script>
+</body>
+</html>

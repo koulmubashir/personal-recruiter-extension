@@ -89,6 +89,8 @@
         "test-auth.html",
         "auth-toggle.html",
         "test-suite.html",
+        "auth-debug-tool.html",
+        "ai-magic-test.html",
         "GOOGLE_OAUTH_SETUP.md"
       ],
       "matches": [

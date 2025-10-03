@@ -327,16 +327,43 @@ class PersonalRecruiter {
       const userProfile = await response.json();
       console.log('Got user profile:', userProfile);
       
-      // Store authentication data
+      // Validate required user data
+      if (!userProfile || (!userProfile.name && !userProfile.email)) {
+        console.error('Incomplete user profile data:', userProfile);
+        throw new Error('Incomplete user profile data received from Google');
+      }
+      
+      // Ensure consistent data structure
+      const normalizedProfile = {
+        id: userProfile.id,
+        email: userProfile.email,
+        verified_email: userProfile.verified_email,
+        name: userProfile.name || userProfile.given_name || userProfile.email?.split('@')[0],
+        given_name: userProfile.given_name,
+        family_name: userProfile.family_name,
+        picture: userProfile.picture,
+        locale: userProfile.locale,
+        // Add timestamp for debugging
+        lastAuthenticated: new Date().toISOString()
+      };
+      
+      console.log('Normalized user profile:', normalizedProfile);
+      
+      // Store authentication data with both fields for compatibility
       console.log('Storing authentication data...');
       await chrome.storage.sync.set({
         isAuthenticated: true,
-        userProfile: userProfile,
+        userProfile: normalizedProfile,
+        user: normalizedProfile, // Also store as 'user' for consistency
         authToken: token
       });
       
+      // Verify storage was successful
+      const verification = await chrome.storage.sync.get(['isAuthenticated', 'userProfile', 'user']);
+      console.log('Storage verification:', verification);
+      
       console.log('=== BACKGROUND: Authentication successful ===');
-      return userProfile;
+      return normalizedProfile;
       
     } catch (error) {
       console.error('=== BACKGROUND: Authentication failed ===');
@@ -679,12 +706,29 @@ class PersonalRecruiter {
   }
 
   async getAuthStatus() {
-    const { isAuthenticated, userProfile } = await chrome.storage.sync.get(['isAuthenticated', 'userProfile']);
-    return { 
+    console.log('=== BACKGROUND: Getting auth status ===');
+    
+    const { isAuthenticated, userProfile, user } = await chrome.storage.sync.get(['isAuthenticated', 'userProfile', 'user']);
+    
+    console.log('Storage data:', { isAuthenticated, userProfile, user });
+    
+    // Use userProfile or user, whichever has more complete data
+    let userData = userProfile || user;
+    
+    // Validate user data completeness
+    if (userData && (!userData.name && !userData.email)) {
+      console.warn('Stored user data incomplete:', userData);
+      userData = null;
+    }
+    
+    const result = { 
       isAuthenticated: isAuthenticated || false, 
-      user: userProfile,
-      userProfile: userProfile  // Keep both for compatibility
+      user: userData,
+      userProfile: userData  // Keep both for compatibility
     };
+    
+    console.log('=== BACKGROUND: Auth status result ===', result);
+    return result;
   }
 
   async checkAuthStatus() {

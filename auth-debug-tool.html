@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Recruiter - Auth Debug</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .debug-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background: #f9f9f9;
+        }
+        .error { background: #ffebee; border-color: #f44336; }
+        .success { background: #e8f5e8; border-color: #4caf50; }
+        .warning { background: #fff3e0; border-color: #ff9800; }
+        .button {
+            background: #4285f4;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .button:hover { background: #3367d6; }
+        .button.danger { background: #dc3545; }
+        .button.danger:hover { background: #c82333; }
+        pre {
+            background: #f4f4f4;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Personal Recruiter - Authentication Debug</h1>
+        <p>Use this tool to diagnose and fix authentication issues.</p>
+
+        <div class="debug-section">
+            <h3>📊 Extension Status</h3>
+            <div id="extensionStatus">Checking...</div>
+        </div>
+
+        <div class="debug-section">
+            <h3>🔑 Authentication Status</h3>
+            <div id="authStatus">Checking...</div>
+            <button class="button" onclick="checkAuth()">🔄 Refresh Auth Status</button>
+            <button class="button" onclick="testLogin()">🔐 Test Login</button>
+            <button class="button danger" onclick="clearAuth()">🗑️ Clear Auth Data</button>
+        </div>
+
+        <div class="debug-section">
+            <h3>👤 User Data</h3>
+            <div id="userData">Checking...</div>
+        </div>
+
+        <div class="debug-section">
+            <h3>💾 Storage Data</h3>
+            <div id="storageData">Checking...</div>
+            <button class="button" onclick="viewStorage()">👁️ View All Storage</button>
+            <button class="button danger" onclick="clearStorage()">🗑️ Clear All Storage</button>
+        </div>
+
+        <div class="debug-section">
+            <h3>🔧 Actions</h3>
+            <button class="button" onclick="runDiagnostics()">🩺 Run Full Diagnostics</button>
+            <button class="button" onclick="resetExtension()">🔄 Reset Extension</button>
+            <button class="button" onclick="exportDebugInfo()">📋 Export Debug Info</button>
+        </div>
+
+        <div class="debug-section">
+            <h3>📝 Debug Log</h3>
+            <pre id="debugLog">Debug information will appear here...</pre>
+        </div>
+    </div>
+
+    <script>
+        let debugInfo = [];
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toISOString();
+            const entry = `[${timestamp}] ${type.toUpperCase()}: ${message}`;
+            debugInfo.push(entry);
+            
+            const logElement = document.getElementById('debugLog');
+            logElement.textContent = debugInfo.slice(-20).join('\n');
+            console.log(entry);
+        }
+
+        function updateStatus(elementId, content, type = '') {
+            const element = document.getElementById(elementId);
+            element.innerHTML = content;
+            element.className = `debug-section ${type}`;
+        }
+
+        async function sendMessage(message) {
+            return new Promise((resolve) => {
+                chrome.runtime.sendMessage(message, (response) => {
+                    if (chrome.runtime.lastError) {
+                        log(`Message error: ${chrome.runtime.lastError.message}`, 'error');
+                        resolve({ success: false, error: chrome.runtime.lastError.message });
+                    } else {
+                        resolve(response);
+                    }
+                });
+            });
+        }
+
+        async function checkAuth() {
+            log('Checking authentication status...');
+            try {
+                const response = await sendMessage({ action: 'getAuthStatus' });
+                log(`Auth response: ${JSON.stringify(response)}`, 'info');
+                
+                if (response && response.success) {
+                    const isAuth = response.data?.isAuthenticated;
+                    const user = response.data?.user;
+                    
+                    let status = `<strong>Authenticated:</strong> ${isAuth ? '✅ Yes' : '❌ No'}<br>`;
+                    
+                    if (user) {
+                        status += `<strong>User Data:</strong><br>`;
+                        status += `• Name: ${user.name || '❌ Missing'}<br>`;
+                        status += `• Email: ${user.email || '❌ Missing'}<br>`;
+                        status += `• Picture: ${user.picture ? '✅ Available' : '❌ Missing'}<br>`;
+                        status += `• Last Auth: ${user.lastAuthenticated || 'Unknown'}<br>`;
+                    } else {
+                        status += `<strong>User Data:</strong> ❌ Not available<br>`;
+                    }
+                    
+                    updateStatus('authStatus', status, isAuth ? 'success' : 'error');
+                } else {
+                    updateStatus('authStatus', `❌ Failed to get auth status: ${response?.error || 'Unknown error'}`, 'error');
+                }
+            } catch (error) {
+                log(`Auth check failed: ${error.message}`, 'error');
+                updateStatus('authStatus', `❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testLogin() {
+            log('Testing login process...');
+            updateStatus('authStatus', '🔄 Testing login...', 'warning');
+            
+            try {
+                const response = await sendMessage({ action: 'authenticate' });
+                log(`Login response: ${JSON.stringify(response)}`, 'info');
+                
+                if (response && response.success) {
+                    log('Login test successful!', 'success');
+                    await checkAuth();
+                } else {
+                    log(`Login test failed: ${response?.error || 'Unknown error'}`, 'error');
+                    updateStatus('authStatus', `❌ Login failed: ${response?.error || 'Unknown error'}`, 'error');
+                }
+            } catch (error) {
+                log(`Login test error: ${error.message}`, 'error');
+                updateStatus('authStatus', `❌ Login error: ${error.message}`, 'error');
+            }
+        }
+
+        async function clearAuth() {
+            if (!confirm('Clear all authentication data? You will need to log in again.')) return;
+            
+            log('Clearing authentication data...');
+            try {
+                await sendMessage({ action: 'logout' });
+                await chrome.storage.sync.set({
+                    isAuthenticated: false,
+                    userProfile: null,
+                    user: null,
+                    authToken: null
+                });
+                log('Authentication data cleared', 'success');
+                await checkAuth();
+            } catch (error) {
+                log(`Failed to clear auth: ${error.message}`, 'error');
+            }
+        }
+
+        async function viewStorage() {
+            log('Checking storage data...');
+            try {
+                chrome.storage.sync.get(null, (data) => {
+                    const keys = Object.keys(data);
+                    let content = `<strong>Storage Keys:</strong> ${keys.length}<br><br>`;
+                    
+                    for (const [key, value] of Object.entries(data)) {
+                        const valueStr = typeof value === 'object' ? JSON.stringify(value, null, 2) : String(value);
+                        content += `<strong>${key}:</strong><br><pre style="margin: 5px 0; max-height: 100px; overflow-y: auto;">${valueStr}</pre><br>`;
+                    }
+                    
+                    updateStatus('storageData', content, 'success');
+                    log(`Storage contains ${keys.length} keys`, 'info');
+                });
+            } catch (error) {
+                log(`Storage check failed: ${error.message}`, 'error');
+                updateStatus('storageData', `❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function clearStorage() {
+            if (!confirm('Clear ALL extension data? This cannot be undone!')) return;
+            
+            log('Clearing all storage data...');
+            try {
+                await chrome.storage.sync.clear();
+                await chrome.storage.local.clear();
+                log('All storage data cleared', 'success');
+                await viewStorage();
+                await checkAuth();
+            } catch (error) {
+                log(`Failed to clear storage: ${error.message}`, 'error');
+            }
+        }
+
+        async function runDiagnostics() {
+            log('Running full diagnostics...');
+            
+            // Check extension status
+            updateStatus('extensionStatus', '🔄 Checking...', 'warning');
+            const manifest = chrome.runtime.getManifest();
+            updateStatus('extensionStatus', `
+                <strong>Extension:</strong> ${manifest.name}<br>
+                <strong>Version:</strong> ${manifest.version}<br>
+                <strong>Manifest V:</strong> ${manifest.manifest_version}<br>
+                <strong>Permissions:</strong> ${manifest.permissions?.join(', ') || 'None'}<br>
+                <strong>OAuth Client:</strong> ${manifest.oauth2?.client_id ? '✅ Configured' : '❌ Missing'}
+            `, 'success');
+            
+            // Check auth status
+            await checkAuth();
+            
+            // Check storage
+            await viewStorage();
+            
+            log('Diagnostics completed', 'success');
+        }
+
+        async function resetExtension() {
+            if (!confirm('Reset extension to factory defaults? All data will be lost!')) return;
+            
+            log('Resetting extension...');
+            await clearStorage();
+            chrome.runtime.reload();
+        }
+
+        function exportDebugInfo() {
+            const debugData = {
+                timestamp: new Date().toISOString(),
+                extension: chrome.runtime.getManifest(),
+                debugLog: debugInfo,
+                userAgent: navigator.userAgent,
+                url: window.location.href
+            };
+            
+            const blob = new Blob([JSON.stringify(debugData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `personal-recruiter-debug-${Date.now()}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            log('Debug info exported', 'success');
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            log('Auth debug tool loaded');
+            runDiagnostics();
+        });
+    </script>
+</body>
+</html>

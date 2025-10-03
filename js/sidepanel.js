@@ -125,6 +125,92 @@ class SidePanelController {
         this.closeJobDetailsModal();
       }
     });
+    
+    // Update AI Magic button state when tab changes
+    if (chrome.tabs) {
+      chrome.tabs.onActivated.addListener(() => this.updateAIMagicButtonState());
+      chrome.tabs.onUpdated.addListener(() => this.updateAIMagicButtonState());
+    }
+    
+    // Initial AI Magic button state
+    setTimeout(() => this.updateAIMagicButtonState(), 500);
+  }
+
+  async updateAIMagicButtonState() {
+    if (!this.aiMagicBtn) return;
+
+    try {
+      // Get current active tab
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      
+      if (!tab || !tab.url) {
+        this.setAIMagicButtonState(false, '🪄 AI Magic - No active tab');
+        return;
+      }
+
+      const url = tab.url.toLowerCase();
+      
+      // Check if this is a restricted page
+      if (url.startsWith('chrome://') || 
+          url.startsWith('chrome-extension://') || 
+          url.startsWith('moz-extension://') ||
+          url.startsWith('about:') ||
+          url.startsWith('file://') ||
+          url === 'chrome://newtab/' ||
+          url === 'about:blank') {
+        this.setAIMagicButtonState(false, '🪄 AI Magic - Not available on this page');
+        return;
+      }
+
+      // Check if this looks like a job-related page
+      const jobSitePatterns = [
+        'linkedin.com/jobs',
+        'indeed.com',
+        'glassdoor.com',
+        'monster.com',
+        'ziprecruiter.com',
+        'careerbuilder.com',
+        'dice.com',
+        'stackoverflow.com/jobs',
+        'remote.co',
+        'weworkremotely.com',
+        'flexjobs.com',
+        '/careers',
+        '/jobs',
+        '/employment',
+        '/hiring',
+        '/opportunities'
+      ];
+
+      const isJobRelated = jobSitePatterns.some(pattern => url.includes(pattern));
+      const title = tab.title?.toLowerCase() || '';
+      const hasJobKeywords = title.includes('job') || title.includes('career') || title.includes('position');
+
+      if (isJobRelated || hasJobKeywords) {
+        this.setAIMagicButtonState(true, '🪄 AI Magic - Auto Fill from Page');
+      } else {
+        this.setAIMagicButtonState(true, '🪄 AI Magic - Extract from Current Page');
+      }
+
+    } catch (error) {
+      console.log('Failed to check tab for AI Magic:', error);
+      this.setAIMagicButtonState(false, '🪄 AI Magic - Error checking page');
+    }
+  }
+
+  setAIMagicButtonState(enabled, text) {
+    if (!this.aiMagicBtn) return;
+
+    this.aiMagicBtn.disabled = !enabled;
+    this.aiMagicBtn.textContent = text;
+    
+    if (enabled) {
+      this.aiMagicBtn.classList.remove('disabled');
+      this.aiMagicBtn.title = 'Extract job information from the current page';
+    } else {
+      this.aiMagicBtn.classList.add('disabled');
+      this.aiMagicBtn.title = 'AI Magic is not available on this type of page';
+    }
   }
 
   async checkAuthStatus() {
@@ -135,13 +221,24 @@ class SidePanelController {
       const response = await this.sendMessage({ action: 'getAuthStatus' });
       console.log('Auth status response:', response);
       
-      if (response && response.success) {
-        if (response.data && response.data.isAuthenticated) {
+      if (response && response.success && response.data) {
+        console.log('Auth status data:', response.data);
+        
+        if (response.data.isAuthenticated && response.data.user) {
           this.isAuthenticated = true;
           this.currentUser = response.data.user;
+          
+          // Validate user data
+          if (!this.currentUser.name && !this.currentUser.email) {
+            console.warn('User data incomplete, attempting re-authentication');
+            this.showAuthSection();
+            return;
+          }
+          
           this.showMainContent();
           await this.loadApplications();
         } else {
+          console.log('User not authenticated or missing user data');
           this.showAuthSection();
         }
       } else {
@@ -167,10 +264,29 @@ class SidePanelController {
       
       if (response && response.success && response.data) {
         console.log('=== SIDEPANEL: Login successful ===');
+        
+        // Validate the user data received
+        if (!response.data.name && !response.data.email) {
+          console.error('Received incomplete user data:', response.data);
+          this.showError('Authentication succeeded but user data is incomplete. Please try logging in again.');
+          return;
+        }
+        
         this.isAuthenticated = true;
         this.currentUser = response.data;
+        
+        console.log('=== SIDEPANEL: User data validated ===', {
+          hasName: !!this.currentUser.name,
+          hasEmail: !!this.currentUser.email,
+          hasPicture: !!this.currentUser.picture
+        });
+        
         this.showMainContent();
         await this.loadApplications();
+        
+        // Show success message
+        this.showSuccess('Successfully signed in with Google!');
+        
       } else {
         const errorMsg = 'Login failed: ' + (response?.error || 'Unknown error');
         console.error('=== SIDEPANEL: Login failed ===', errorMsg);
@@ -179,7 +295,18 @@ class SidePanelController {
       }
     } catch (error) {
       console.error('=== SIDEPANEL: Login exception ===', error);
-      this.showError('Login failed: ' + error.message);
+      
+      // Provide more specific error messages
+      let errorMessage = 'Login failed: ';
+      if (error.message.includes('interactive')) {
+        errorMessage += 'Please complete the Google sign-in process in the popup window.';
+      } else if (error.message.includes('network')) {
+        errorMessage += 'Network error. Please check your internet connection and try again.';
+      } else {
+        errorMessage += error.message;
+      }
+      
+      this.showError(errorMessage);
     } finally {
       this.hideLoading();
     }
@@ -216,30 +343,75 @@ class SidePanelController {
     this.mainContent.style.display = 'flex';
     
     if (this.currentUser) {
+      console.log('=== SIDEPANEL: Setting up user display ===', this.currentUser);
+      
       // Update avatar with Google profile picture
       const avatarImg = document.getElementById('userAvatar');
       const userNameEl = document.getElementById('userName');
       const userEmailEl = document.getElementById('userEmail');
       
       if (avatarImg) {
-        avatarImg.src = this.currentUser.picture || 'https://via.placeholder.com/40x40.png?text=👤';
-        avatarImg.alt = `${this.currentUser.name || 'User'}'s profile picture`;
+        // Enhanced avatar handling with fallbacks
+        const profilePicture = this.currentUser.picture || this.currentUser.photo;
+        
+        if (profilePicture) {
+          avatarImg.src = profilePicture;
+          avatarImg.alt = `${this.currentUser.name || 'User'}'s profile picture`;
+          
+          // Handle image load errors
+          avatarImg.onerror = () => {
+            console.warn('Profile picture failed to load, using fallback');
+            avatarImg.src = this.generateAvatarFallback(this.currentUser.name || this.currentUser.email);
+          };
+        } else {
+          // Generate initials-based avatar
+          avatarImg.src = this.generateAvatarFallback(this.currentUser.name || this.currentUser.email);
+        }
       }
       
       if (userNameEl) {
-        userNameEl.textContent = this.currentUser.name || 'Google User';
+        const displayName = this.currentUser.name || 
+                           this.currentUser.given_name || 
+                           this.currentUser.email?.split('@')[0] || 
+                           'Google User';
+        userNameEl.textContent = displayName;
       }
       
       if (userEmailEl) {
         userEmailEl.textContent = this.currentUser.email || '';
       }
       
-      console.log('=== SIDEPANEL: Displaying user ===', {
+      console.log('=== SIDEPANEL: User display updated ===', {
         name: this.currentUser.name,
         email: this.currentUser.email,
-        picture: this.currentUser.picture
+        picture: this.currentUser.picture,
+        hasAvatar: !!avatarImg?.src
       });
+    } else {
+      console.error('=== SIDEPANEL: No user data available for display ===');
     }
+  }
+
+  generateAvatarFallback(nameOrEmail) {
+    // Generate a simple SVG avatar with initials
+    const name = nameOrEmail || 'U';
+    const initials = name.split(' ').map(word => word[0]).join('').substring(0, 2).toUpperCase();
+    
+    // Generate a consistent color based on the name
+    const hash = name.split('').reduce((a, b) => {
+      a = ((a << 5) - a) + b.charCodeAt(0);
+      return a & a;
+    }, 0);
+    const hue = Math.abs(hash) % 360;
+    
+    const svg = `
+      <svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="20" cy="20" r="20" fill="hsl(${hue}, 60%, 60%)"/>
+        <text x="20" y="26" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="14" font-weight="bold">${initials}</text>
+      </svg>
+    `;
+    
+    return 'data:image/svg+xml;base64,' + btoa(svg);
   }
 
   switchTab(tabName) {
@@ -347,15 +519,44 @@ class SidePanelController {
       // Get current active tab
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
       
-      if (!tab) {
+      if (!tab || !tab.url) {
         throw new Error('No active tab found');
       }
       
       console.log('Current tab:', tab.url);
       
-      // Check if we can access the tab
-      if (tab.url.startsWith('chrome://') || tab.url.startsWith('chrome-extension://') || tab.url.startsWith('moz-extension://')) {
-        throw new Error('Cannot analyze Chrome internal pages or extension pages');
+      // Enhanced validation for restricted pages
+      const url = tab.url.toLowerCase();
+      
+      if (url.startsWith('chrome://')) {
+        throw new Error('Cannot analyze Chrome internal pages (chrome://). Please navigate to a job posting page.');
+      }
+      
+      if (url.startsWith('chrome-extension://')) {
+        throw new Error('Cannot analyze Chrome extension pages. Please navigate to a job posting page.');
+      }
+      
+      if (url.startsWith('moz-extension://')) {
+        throw new Error('Cannot analyze browser extension pages. Please navigate to a job posting page.');
+      }
+      
+      if (url.startsWith('about:') || url === 'about:blank') {
+        throw new Error('Cannot analyze browser about pages. Please navigate to a job posting page.');
+      }
+      
+      if (url.startsWith('file://')) {
+        throw new Error('Cannot analyze local files. Please navigate to a job posting page.');
+      }
+      
+      // Check if we have permission to access the tab
+      try {
+        await chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          func: () => true
+        });
+      } catch (permissionError) {
+        console.log('Permission error:', permissionError);
+        throw new Error('Cannot access this page. Please navigate to a regular webpage with job information.');
       }
       
       console.log('Injecting content script...');
@@ -501,10 +702,9 @@ class SidePanelController {
       console.error('Error stack:', error.stack);
       this.showToast(`AI Magic failed: ${error.message}`, 'error');
     } finally {
-      // Reset button
-      this.aiMagicBtn.textContent = '🪄 AI Magic - Auto Fill from Page';
+      // Reset button state and restore based on current page
       this.aiMagicBtn.classList.remove('loading');
-      this.aiMagicBtn.disabled = false;
+      await this.updateAIMagicButtonState();
     }
   }
 
