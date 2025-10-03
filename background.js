@@ -45,6 +45,7 @@ class PersonalRecruiter {
     
     // Set up listeners
     chrome.runtime.onInstalled.addListener(() => this.onInstalled());
+    // Optimized: Only monitor tab updates on job-related sites
     chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => this.onTabUpdated(tabId, changeInfo, tab));
     chrome.runtime.onMessage.addListener((request, sender, sendResponse) => this.onMessage(request, sender, sendResponse));
     
@@ -140,8 +141,17 @@ class PersonalRecruiter {
   }
 
   async onTabUpdated(tabId, changeInfo, tab) {
+    // Performance optimization: Only analyze job-related pages
     if (changeInfo.status === 'complete' && tab.url) {
-      await this.analyzePageForJobContent(tab);
+      // Quick URL filter before heavy processing
+      const url = tab.url.toLowerCase();
+      const isJobRelated = this.jobSites.some(site => url.includes(site)) ||
+                          url.includes('/careers') || url.includes('/jobs') ||
+                          url.includes('/employment') || url.includes('/hiring');
+      
+      if (isJobRelated) {
+        await this.analyzePageForJobContent(tab);
+      }
     }
   }
 
@@ -432,26 +442,18 @@ class PersonalRecruiter {
   }
 
   async analyzePageForJobContent(tab) {
+    // Skip if background processing is disabled or tab is not ready
+    if (!tab.id || tab.id < 0) return;
+    
     const { settings } = await chrome.storage.sync.get(['settings']);
     
     if (!settings?.autoDetection || !settings?.trackingEnabled) {
       return;
     }
 
-    const url = tab.url.toLowerCase();
-    const isJobSite = this.jobSites.some(site => url.includes(site.toLowerCase()));
-    
-    if (isJobSite) {
-      // Inject content script to analyze the page
-      try {
-        await chrome.scripting.executeScript({
-          target: { tabId: tab.id },
-          files: ['content.js']
-        });
-      } catch (error) {
-        console.error('Failed to inject content script:', error);
-      }
-    }
+    // Content script is now injected via manifest for job-related URLs only
+    // No need to manually inject here anymore since we optimized the manifest
+    console.log('Job-related page detected:', tab.url);
   }
 
   async saveJobApplication(applicationData) {

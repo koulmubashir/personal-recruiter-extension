@@ -29,7 +29,30 @@
   "content_scripts": [
     {
       "matches": [
-        "<all_urls>"
+        "*://linkedin.com/jobs/*",
+        "*://www.linkedin.com/jobs/*",
+        "*://indeed.com/*",
+        "*://www.indeed.com/*",
+        "*://glassdoor.com/*",
+        "*://www.glassdoor.com/*",
+        "*://monster.com/*",
+        "*://www.monster.com/*",
+        "*://ziprecruiter.com/*",
+        "*://www.ziprecruiter.com/*",
+        "*://careerbuilder.com/*",
+        "*://www.careerbuilder.com/*",
+        "*://dice.com/*",
+        "*://www.dice.com/*",
+        "*://stackoverflow.com/jobs/*",
+        "*://remote.co/*",
+        "*://www.remote.co/*",
+        "*://weworkremotely.com/*",
+        "*://flexjobs.com/*",
+        "*://www.flexjobs.com/*",
+        "*://*/*careers*",
+        "*://*/*jobs*",
+        "*://*/*employment*",
+        "*://*/*hiring*"
       ],
       "js": [
         "content.js"

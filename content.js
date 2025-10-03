@@ -1,6 +1,16 @@
 // Content script for detecting job applications and job-related content
 class JobDetector {
   constructor() {
+    // Performance optimization: Early exit if not a job-related page
+    if (!this.isLikelyJobPage()) {
+      console.log('Page not job-related, skipping extension initialization');
+      return;
+    }
+
+    this.isInitialized = false;
+    this.observerActive = false;
+    this.cleanupCallbacks = [];
+    
     this.jobKeywords = [
       'apply now', 'submit application', 'apply for this job', 'apply online',
       'job application', 'send resume', 'submit resume', 'apply today',
@@ -49,28 +59,89 @@ class JobDetector {
     this.init();
   }
 
+  isLikelyJobPage() {
+    const url = window.location.href.toLowerCase();
+    const title = document.title.toLowerCase();
+    
+    // Quick URL check for known job sites and patterns
+    const jobSitePatterns = [
+      'linkedin.com/jobs',
+      'indeed.com',
+      'glassdoor.com',
+      'monster.com',
+      'ziprecruiter.com',
+      'careerbuilder.com',
+      'dice.com',
+      'stackoverflow.com/jobs',
+      'remote.co',
+      'weworkremotely.com',
+      'flexjobs.com',
+      '/careers',
+      '/jobs',
+      '/employment',
+      '/hiring',
+      '/opportunities'
+    ];
+
+    const isJobSite = jobSitePatterns.some(pattern => url.includes(pattern));
+    const hasJobKeywords = title.includes('job') || title.includes('career') || title.includes('position');
+    
+    return isJobSite || hasJobKeywords;
+  }
+
   init() {
+    if (this.isInitialized) return;
+    
+    // Add cleanup handler for page unload
+    window.addEventListener('beforeunload', () => this.cleanup());
+    
     this.detectJobPage();
     this.setupApplicationTracking();
-    this.setupMutationObserver();
+    this.setupOptimizedMutationObserver();
+    
+    this.isInitialized = true;
+  }
+
+  cleanup() {
+    if (this.observer && this.observerActive) {
+      this.observer.disconnect();
+      this.observerActive = false;
+    }
+    
+    // Clean up any timeouts or intervals
+    this.cleanupCallbacks.forEach(callback => callback());
+    this.cleanupCallbacks = [];
   }
 
   detectJobPage() {
     const url = window.location.href;
-    const pageText = document.body.innerText.toLowerCase();
+    
+    // Quick check - if we already determined this isn't a job page, skip heavy processing
+    if (!this.isLikelyJobPage()) {
+      return;
+    }
+    
+    // Throttled text search - only check first 1000 characters
+    const pageText = document.body.innerText.toLowerCase().substring(0, 1000);
     
     // Check if this looks like a job posting page
     const hasJobKeywords = this.jobKeywords.some(keyword => 
       pageText.includes(keyword.toLowerCase())
     );
     
-    const hasJobTitle = this.jobTitleSelectors.some(selector => 
-      document.querySelector(selector)
-    );
+    // Optimized selector check - stop on first match
+    let hasJobTitle = false;
+    for (const selector of this.jobTitleSelectors) {
+      if (document.querySelector(selector)) {
+        hasJobTitle = true;
+        break;
+      }
+    }
     
     if (hasJobKeywords || hasJobTitle) {
       this.isJobPage = true;
-      this.extractJobInfo();
+      // Delay extraction to avoid blocking UI
+      setTimeout(() => this.extractJobInfo(), 100);
     }
   }
 
@@ -429,32 +500,73 @@ class JobDetector {
     }, 4000);
   }
 
-  setupMutationObserver() {
-    // Watch for dynamic content changes (SPAs)
-    const observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
-          // Re-check for job content when page changes
-          setTimeout(() => {
-            this.detectJobPage();
-            this.setupApplicationTracking();
-          }, 1000);
+  setupOptimizedMutationObserver() {
+    // Only set up observer for known SPA job sites
+    const url = window.location.href.toLowerCase();
+    const spaSites = ['linkedin.com', 'indeed.com', 'glassdoor.com'];
+    
+    if (!spaSites.some(site => url.includes(site))) {
+      return; // Skip observer for non-SPA sites
+    }
+    
+    if (this.observerActive) {
+      return; // Already observing
+    }
+
+    // Debounced change handler to prevent excessive triggering
+    let changeTimeout;
+    const handleChanges = () => {
+      if (changeTimeout) clearTimeout(changeTimeout);
+      changeTimeout = setTimeout(() => {
+        if (this.isLikelyJobPage()) {
+          this.detectJobPage();
+          this.setupApplicationTracking();
         }
+      }, 1000); // Increased debounce time
+    };
+    
+    // Store timeout in cleanup callbacks
+    this.cleanupCallbacks.push(() => {
+      if (changeTimeout) clearTimeout(changeTimeout);
+    });
+
+    // More targeted observation - only watch for major structural changes
+    this.observer = new MutationObserver((mutations) => {
+      // Filter mutations to only significant changes
+      const significantChange = mutations.some(mutation => {
+        return mutation.type === 'childList' && 
+               mutation.addedNodes.length > 0 &&
+               Array.from(mutation.addedNodes).some(node => 
+                 node.nodeType === Node.ELEMENT_NODE && 
+                 (node.tagName === 'MAIN' || node.tagName === 'SECTION' || 
+                  node.classList?.contains('job') || node.classList?.contains('posting'))
+               );
       });
+      
+      if (significantChange) {
+        handleChanges();
+      }
     });
     
-    observer.observe(document.body, {
+    // Observe with more restrictive settings
+    this.observer.observe(document.body, {
       childList: true,
-      subtree: true
+      subtree: true,
+      attributes: false, // Don't watch attribute changes
+      characterData: false // Don't watch text changes
     });
+    
+    this.observerActive = true;
   }
 }
 
-// Initialize job detection when page loads
+// Initialize job detection when page loads - with performance optimization
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
-    new JobDetector();
+    // Small delay to ensure page is stable
+    setTimeout(() => new JobDetector(), 200);
   });
 } else {
-  new JobDetector();
+  // Page already loaded, but add small delay to avoid blocking
+  setTimeout(() => new JobDetector(), 100);
 }

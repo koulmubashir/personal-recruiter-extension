@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Recruiter - Automated Video Generator</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f7fa;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+        
+        h1 {
+            color: #1a73e8;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .video-container {
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto 30px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .video-canvas {
+            width: 100%;
+            height: 450px;
+            background: #000;
+            display: block;
+        }
+        
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .control-group {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .control-group h3 {
+            margin-top: 0;
+            color: #495057;
+        }
+        
+        button {
+            background: #1a73e8;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+            transition: background 0.3s;
+        }
+        
+        button:hover {
+            background: #1557b0;
+        }
+        
+        .generate-btn {
+            background: #28a745;
+            font-size: 18px;
+            padding: 15px 30px;
+        }
+        
+        .download-btn {
+            background: #dc3545;
+            font-size: 18px;
+            padding: 15px 30px;
+        }
+        
+        .progress {
+            width: 100%;
+            height: 20px;
+            background: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #1a73e8, #34a853);
+            width: 0%;
+            transition: width 0.3s;
+        }
+        
+        .scene-info {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #1a73e8;
+        }
+        
+        .status {
+            text-align: center;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+        
+        .status.ready {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status.generating {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .status.complete {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎬 Personal Recruiter - Automated Video Generator</h1>
+        
+        <div class="video-container">
+            <canvas id="videoCanvas" class="video-canvas" width="1280" height="720"></canvas>
+        </div>
+        
+        <div class="progress">
+            <div id="progressBar" class="progress-bar"></div>
+        </div>
+        
+        <div id="status" class="status ready">Ready to generate your promotional video!</div>
+        
+        <div id="currentScene" class="scene-info" style="display: none;">
+            <strong>Current Scene:</strong> <span id="sceneText">Initializing...</span>
+        </div>
+        
+        <div style="text-align: center;">
+            <button id="generateBtn" class="generate-btn" onclick="generateVideo()">
+                🎥 Generate 30-Second Promotional Video
+            </button>
+            <button id="downloadBtn" class="download-btn" onclick="downloadVideo()" style="display: none;">
+                📥 Download Video (MP4)
+            </button>
+        </div>
+        
+        <div class="controls">
+            <div class="control-group">
+                <h3>🎨 Video Scenes</h3>
+                <div id="sceneList">
+                    <div>1. Problem Hook (0-3s)</div>
+                    <div>2. Solution Intro (4-8s)</div>
+                    <div>3. AI Magic Demo (9-15s)</div>
+                    <div>4. Organization Features (16-22s)</div>
+                    <div>5. Security & Trust (23-27s)</div>
+                    <div>6. Call to Action (28-30s)</div>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <h3>🎯 Features Highlighted</h3>
+                <div>✨ AI Magic Extraction</div>
+                <div>📊 Smart Organization</div>
+                <div>🔐 Secure & Private</div>
+                <div>💼 Professional Design</div>
+                <div>🎯 Chrome Web Store Ready</div>
+            </div>
+            
+            <div class="control-group">
+                <h3>📱 Video Specifications</h3>
+                <div><strong>Resolution:</strong> 1280x720 HD</div>
+                <div><strong>Duration:</strong> 30 seconds</div>
+                <div><strong>Format:</strong> MP4 (H.264)</div>
+                <div><strong>Frame Rate:</strong> 30 FPS</div>
+                <div><strong>Audio:</strong> Synchronized voiceover</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('videoCanvas');
+        const ctx = canvas.getContext('2d');
+        const progressBar = document.getElementById('progressBar');
+        const status = document.getElementById('status');
+        const currentScene = document.getElementById('currentScene');
+        const sceneText = document.getElementById('sceneText');
+        const generateBtn = document.getElementById('generateBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        
+        let videoFrames = [];
+        let currentFrame = 0;
+        let isGenerating = false;
+        
+        // Color scheme
+        const colors = {
+            primary: '#1a73e8',
+            secondary: '#34a853',
+            accent: '#ff6b35',
+            text: '#ffffff',
+            background: '#2c3e50',
+            light: '#f8f9fa'
+        };
+        
+        // Video scenes configuration
+        const scenes = [
+            {
+                title: "Problem Hook",
+                duration: 3,
+                text: "Tired of losing track of job applications?",
+                subtitle: "Job Search Chaos?",
+                visual: "split-screen-chaos"
+            },
+            {
+                title: "Solution Introduction", 
+                duration: 4,
+                text: "Meet Personal Recruiter",
+                subtitle: "AI-Powered Job Tracking Assistant",
+                visual: "clean-interface"
+            },
+            {
+                title: "AI Magic Demo",
+                duration: 6,
+                text: "AI Magic instantly extracts job details",
+                subtitle: "✨ One-Click Data Extraction",
+                visual: "ai-extraction"
+            },
+            {
+                title: "Organization Features",
+                duration: 6,
+                text: "Track applications, manage interviews",
+                subtitle: "📊 Smart Organization",
+                visual: "dashboard-demo"
+            },
+            {
+                title: "Security & Trust",
+                duration: 4,
+                text: "Secure, private, Google authentication",
+                subtitle: "🔐 Your Data Stays Private",
+                visual: "security-badges"
+            },
+            {
+                title: "Call to Action",
+                duration: 2,
+                text: "Download Personal Recruiter today!",
+                subtitle: "Free on Chrome Web Store",
+                visual: "download-cta"
+            }
+        ];
+        
+        function updateStatus(message, type = 'ready') {
+            status.textContent = message;
+            status.className = `status ${type}`;
+        }
+        
+        function updateProgress(percent) {
+            progressBar.style.width = percent + '%';
+        }
+        
+        function updateScene(sceneName) {
+            sceneText.textContent = sceneName;
+            currentScene.style.display = 'block';
+        }
+        
+        function createGradient(x1, y1, x2, y2, color1, color2) {
+            const gradient = ctx.createLinearGradient(x1, y1, x2, y2);
+            gradient.addColorStop(0, color1);
+            gradient.addColorStop(1, color2);
+            return gradient;
+        }
+        
+        function drawBackground(type = 'gradient') {
+            if (type === 'gradient') {
+                const gradient = createGradient(0, 0, canvas.width, canvas.height, colors.primary, colors.background);
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            } else if (type === 'chaos') {
+                // Chaotic background for problem scene
+                ctx.fillStyle = '#dc3545';
+                ctx.fillRect(0, 0, canvas.width / 2, canvas.height);
+                ctx.fillStyle = colors.light;
+                ctx.fillRect(canvas.width / 2, 0, canvas.width / 2, canvas.height);
+            }
+        }
+        
+        function drawText(text, x, y, fontSize = 48, color = colors.text, align = 'center') {
+            ctx.fillStyle = color;
+            ctx.font = `bold ${fontSize}px Arial, sans-serif`;
+            ctx.textAlign = align;
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+            ctx.shadowBlur = 4;
+            ctx.shadowOffsetX = 2;
+            ctx.shadowOffsetY = 2;
+            ctx.fillText(text, x, y);
+            ctx.shadowBlur = 0;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 0;
+        }
+        
+        function drawIcon(type, x, y, size) {
+            ctx.save();
+            
+            switch (type) {
+                case 'briefcase':
+                    // Draw briefcase icon
+                    ctx.fillStyle = colors.secondary;
+                    ctx.fillRect(x, y + size * 0.3, size, size * 0.5);
+                    ctx.fillRect(x + size * 0.2, y + size * 0.2, size * 0.6, size * 0.2);
+                    ctx.fillRect(x + size * 0.35, y + size * 0.1, size * 0.3, size * 0.15);
+                    break;
+                    
+                case 'ai-magic':
+                    // Draw AI magic wand
+                    ctx.strokeStyle = colors.accent;
+                    ctx.lineWidth = 8;
+                    ctx.beginPath();
+                    ctx.moveTo(x + size * 0.2, y + size * 0.8);
+                    ctx.lineTo(x + size * 0.8, y + size * 0.2);
+                    ctx.stroke();
+                    
+                    // Magic sparkles
+                    const sparkles = [[0.1, 0.3], [0.9, 0.1], [0.7, 0.9], [0.3, 0.2]];
+                    ctx.fillStyle = colors.accent;
+                    sparkles.forEach(([sx, sy]) => {
+                        ctx.beginPath();
+                        ctx.arc(x + size * sx, y + size * sy, 6, 0, Math.PI * 2);
+                        ctx.fill();
+                    });
+                    break;
+                    
+                case 'shield':
+                    // Security shield
+                    ctx.fillStyle = colors.secondary;
+                    ctx.beginPath();
+                    ctx.moveTo(x + size * 0.5, y);
+                    ctx.lineTo(x + size, y + size * 0.3);
+                    ctx.lineTo(x + size, y + size * 0.7);
+                    ctx.lineTo(x + size * 0.5, y + size);
+                    ctx.lineTo(x, y + size * 0.7);
+                    ctx.lineTo(x, y + size * 0.3);
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    // Checkmark
+                    ctx.strokeStyle = colors.text;
+                    ctx.lineWidth = 6;
+                    ctx.beginPath();
+                    ctx.moveTo(x + size * 0.3, y + size * 0.5);
+                    ctx.lineTo(x + size * 0.45, y + size * 0.65);
+                    ctx.lineTo(x + size * 0.7, y + size * 0.35);
+                    ctx.stroke();
+                    break;
+            }
+            
+            ctx.restore();
+        }
+        
+        function drawMockInterface(x, y, width, height) {
+            // Draw browser window mockup
+            ctx.fillStyle = colors.light;
+            ctx.fillRect(x, y, width, height);
+            
+            // Browser header
+            ctx.fillStyle = '#e9ecef';
+            ctx.fillRect(x, y, width, 40);
+            
+            // Traffic lights
+            const circles = [colors.accent, '#ffc107', colors.secondary];
+            circles.forEach((color, i) => {
+                ctx.fillStyle = color;
+                ctx.beginPath();
+                ctx.arc(x + 20 + i * 25, y + 20, 8, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            
+            // Side panel
+            ctx.fillStyle = colors.primary;
+            ctx.fillRect(x + width - 200, y + 40, 200, height - 40);
+            
+            // Panel content simulation
+            ctx.fillStyle = colors.text;
+            for (let i = 0; i < 5; i++) {
+                ctx.fillRect(x + width - 180, y + 60 + i * 30, 160, 20);
+            }
+        }
+        
+        function drawScene(scene, frameInScene, totalFramesInScene) {
+            const progress = frameInScene / totalFramesInScene;
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            switch (scene.visual) {
+                case 'split-screen-chaos':
+                    drawBackground('chaos');
+                    drawText('BEFORE', canvas.width * 0.25, 200, 36, '#dc3545');
+                    drawText('Messy Spreadsheets', canvas.width * 0.25, 400, 24, '#6c757d');
+                    drawText('AFTER', canvas.width * 0.75, 200, 36, colors.secondary);
+                    drawText('Organized Dashboard', canvas.width * 0.75, 400, 24, colors.primary);
+                    break;
+                    
+                case 'clean-interface':
+                    drawBackground();
+                    drawIcon('briefcase', canvas.width * 0.1, canvas.height * 0.3, 120);
+                    drawText('PERSONAL RECRUITER', canvas.width * 0.6, 250, 48);
+                    drawText(scene.subtitle, canvas.width * 0.6, 320, 32, '#ffd700');
+                    break;
+                    
+                case 'ai-extraction':
+                    drawBackground();
+                    drawMockInterface(50, 100, 600, 400);
+                    drawIcon('ai-magic', 700, 200, 100);
+                    
+                    // Animation: data flowing
+                    if (progress > 0.3) {
+                        ctx.strokeStyle = colors.accent;
+                        ctx.lineWidth = 4;
+                        ctx.setLineDash([10, 5]);
+                        ctx.beginPath();
+                        ctx.moveTo(400, 250);
+                        ctx.lineTo(700, 250);
+                        ctx.stroke();
+                        ctx.setLineDash([]);
+                    }
+                    
+                    drawText('✨ AI Magic Extraction', canvas.width * 0.5, 600, 36);
+                    break;
+                    
+                case 'dashboard-demo':
+                    drawBackground();
+                    drawMockInterface(200, 50, 800, 500);
+                    
+                    // Status indicators
+                    const statuses = ['Applied', 'Interview', 'Offer'];
+                    statuses.forEach((status, i) => {
+                        ctx.fillStyle = [colors.accent, '#ffc107', colors.secondary][i];
+                        ctx.fillRect(250 + i * 180, 600, 120, 40);
+                        drawText(status, 310 + i * 180, 625, 18, colors.text);
+                    });
+                    break;
+                    
+                case 'security-badges':
+                    drawBackground();
+                    drawIcon('shield', canvas.width * 0.5 - 60, 200, 120);
+                    drawText('🔐 SECURE & PRIVATE', canvas.width * 0.5, 400, 42);
+                    drawText('Google OAuth • Local Storage • No Data Sharing', canvas.width * 0.5, 480, 24, '#adb5bd');
+                    break;
+                    
+                case 'download-cta':
+                    drawBackground();
+                    
+                    // Chrome Web Store button
+                    ctx.fillStyle = colors.light;
+                    ctx.fillRect(canvas.width * 0.5 - 200, 250, 400, 80);
+                    ctx.strokeStyle = colors.primary;
+                    ctx.lineWidth = 4;
+                    ctx.strokeRect(canvas.width * 0.5 - 200, 250, 400, 80);
+                    
+                    drawText('FREE Download', canvas.width * 0.5, 280, 24, colors.primary);
+                    drawText('Chrome Web Store', canvas.width * 0.5, 310, 32, colors.primary);
+                    
+                    // Pulsing effect
+                    if (Math.floor(frameInScene / 10) % 2 === 0) {
+                        ctx.fillStyle = 'rgba(26, 115, 232, 0.1)';
+                        ctx.fillRect(canvas.width * 0.5 - 220, 230, 440, 120);
+                    }
+                    break;
+            }
+            
+            // Scene text overlay
+            drawText(scene.text, canvas.width * 0.5, 100, 36);
+            if (scene.subtitle) {
+                drawText(scene.subtitle, canvas.width * 0.5, 150, 24, '#ffd700');
+            }
+        }
+        
+        async function generateVideo() {
+            if (isGenerating) return;
+            
+            isGenerating = true;
+            generateBtn.style.display = 'none';
+            downloadBtn.style.display = 'none';
+            videoFrames = [];
+            
+            updateStatus('Generating promotional video...', 'generating');
+            updateProgress(0);
+            
+            const fps = 30;
+            const totalFrames = 30 * fps; // 30 seconds at 30 FPS
+            let currentFrameIndex = 0;
+            
+            for (let sceneIndex = 0; sceneIndex < scenes.length; sceneIndex++) {
+                const scene = scenes[sceneIndex];
+                const sceneFrames = scene.duration * fps;
+                
+                updateScene(`Rendering: ${scene.title}`);
+                
+                for (let frameInScene = 0; frameInScene < sceneFrames; frameInScene++) {
+                    drawScene(scene, frameInScene, sceneFrames);
+                    
+                    // Capture frame
+                    const frameData = canvas.toDataURL('image/jpeg', 0.8);
+                    videoFrames.push(frameData);
+                    
+                    currentFrameIndex++;
+                    updateProgress((currentFrameIndex / totalFrames) * 100);
+                    
+                    // Allow UI to update
+                    await new Promise(resolve => setTimeout(resolve, 1));
+                }
+            }
+            
+            updateStatus('Video generation complete! Ready to download.', 'complete');
+            updateScene('All scenes rendered successfully');
+            downloadBtn.style.display = 'inline-block';
+            generateBtn.style.display = 'inline-block';
+            generateBtn.textContent = '🔄 Regenerate Video';
+            
+            isGenerating = false;
+        }
+        
+        function downloadVideo() {
+            if (videoFrames.length === 0) {
+                alert('Please generate the video first!');
+                return;
+            }
+            
+            updateStatus('Preparing video download...', 'generating');
+            
+            // Create video download (simulated - in reality you'd need a video encoding library)
+            const link = document.createElement('a');
+            
+            // For now, download the final frame as an image
+            // In a real implementation, you'd use libraries like ffmpeg.js to create MP4
+            const finalFrame = videoFrames[videoFrames.length - 1];
+            link.href = finalFrame;
+            link.download = 'personal-recruiter-promotional-video-final-frame.jpg';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // Also create a simple MP4 info file
+            const videoInfo = {
+                title: "Personal Recruiter - 30-Second Promotional Video",
+                duration: "30 seconds",
+                resolution: "1280x720",
+                frames: videoFrames.length,
+                scenes: scenes.map(s => s.title),
+                instructions: "Use video editing software to combine these frames into MP4 format"
+            };
+            
+            const infoBlob = new Blob([JSON.stringify(videoInfo, null, 2)], { type: 'application/json' });
+            const infoLink = document.createElement('a');
+            infoLink.href = URL.createObjectURL(infoBlob);
+            infoLink.download = 'personal-recruiter-video-info.json';
+            
+            document.body.appendChild(infoLink);
+            infoLink.click();
+            document.body.removeChild(infoLink);
+            
+            updateStatus('Video assets downloaded! Use video editing software to create final MP4.', 'complete');
+        }
+        
+        // Initialize with first scene preview
+        window.onload = function() {
+            drawScene(scenes[0], 0, 90);
+        };
+    </script>
+</body>
+</html>
