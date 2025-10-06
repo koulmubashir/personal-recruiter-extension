@@ -1,0 +1,100 @@
+{
+  "manifest_version": 3,
+  "name": "Personal Recruiter - Job Application Tracker",
+  "version": "1.0.1",
+  "description": "Track job applications across job boards and career pages with AI-powered automatic detection and Google account integration.",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "tabs",
+    "identity",
+    "scripting",
+    "sidePanel"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "oauth2": {
+    "client_id": "728714090261-hqhfnujmbl8s2cgbr65cqard6lnfksub.apps.googleusercontent.com",
+    "scopes": [
+      "openid",
+      "email",
+      "profile"
+    ]
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://linkedin.com/jobs/*",
+        "*://www.linkedin.com/jobs/*",
+        "*://indeed.com/*",
+        "*://www.indeed.com/*",
+        "*://glassdoor.com/*",
+        "*://www.glassdoor.com/*",
+        "*://monster.com/*",
+        "*://www.monster.com/*",
+        "*://ziprecruiter.com/*",
+        "*://www.ziprecruiter.com/*",
+        "*://careerbuilder.com/*",
+        "*://www.careerbuilder.com/*",
+        "*://dice.com/*",
+        "*://www.dice.com/*",
+        "*://stackoverflow.com/jobs/*",
+        "*://remote.co/*",
+        "*://www.remote.co/*",
+        "*://weworkremotely.com/*",
+        "*://flexjobs.com/*",
+        "*://www.flexjobs.com/*",
+        "*://*/*careers*",
+        "*://*/*jobs*",
+        "*://*/*employment*",
+        "*://*/*hiring*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_title": "Personal Recruiter - Click to open side panel",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "popup.html",
+        "history.html",
+        "chrome-test.html",
+        "extension-test.html",
+        "oauth-setup-helper.html",
+        "test-auth.html",
+        "auth-toggle.html",
+        "test-suite.html",
+        "auth-debug-tool.html",
+        "ai-magic-test.html",
+        "GOOGLE_OAUTH_SETUP.md"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ]
+}
