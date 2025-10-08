@@ -150,7 +150,7 @@ class SidePanelController {
 
       const url = tab.url.toLowerCase();
       
-      // Check if this is a restricted page
+      // Only disable for truly restricted pages
       if (url.startsWith('chrome://') || 
           url.startsWith('chrome-extension://') || 
           url.startsWith('moz-extension://') ||
@@ -162,7 +162,7 @@ class SidePanelController {
         return;
       }
 
-      // Check if this looks like a job-related page
+      // Check if this looks like a job-related page for better messaging
       const jobSitePatterns = [
         'linkedin.com/jobs',
         'indeed.com',
@@ -175,6 +175,8 @@ class SidePanelController {
         'remote.co',
         'weworkremotely.com',
         'flexjobs.com',
+        'angel.co',
+        'wellfound.com',
         '/careers',
         '/jobs',
         '/employment',
@@ -186,10 +188,13 @@ class SidePanelController {
       const title = tab.title?.toLowerCase() || '';
       const hasJobKeywords = title.includes('job') || title.includes('career') || title.includes('position');
 
+      // Enable AI Magic for all regular web pages (activeTab permission allows this)
       if (isJobRelated || hasJobKeywords) {
-        this.setAIMagicButtonState(true, '🪄 AI Magic - Auto Fill from Page');
-      } else {
+        this.setAIMagicButtonState(true, '🪄 AI Magic - Auto Fill from Job Page');
+      } else if (url.startsWith('https://') || url.startsWith('http://')) {
         this.setAIMagicButtonState(true, '🪄 AI Magic - Extract from Current Page');
+      } else {
+        this.setAIMagicButtonState(false, '🪄 AI Magic - Unsupported page type');
       }
 
     } catch (error) {
@@ -548,26 +553,29 @@ class SidePanelController {
         throw new Error('Cannot analyze local files. Please navigate to a job posting page.');
       }
       
-      // Check if we have permission to access the tab
-      try {
-        await chrome.scripting.executeScript({
-          target: { tabId: tab.id },
-          func: () => true
-        });
-      } catch (permissionError) {
-        console.log('Permission error:', permissionError);
-        throw new Error('Cannot access this page. Please navigate to a regular webpage with job information.');
+      // Check if it's a supported job site for better experience
+      const supportedSites = [
+        'linkedin.com', 'indeed.com', 'glassdoor.com', 'monster.com', 
+        'ziprecruiter.com', 'careerbuilder.com', 'dice.com', 'stackoverflow.com',
+        'remote.co', 'weworkremotely.com', 'flexjobs.com', 'angel.co', 'wellfound.com'
+      ];
+      
+      const isJobSite = supportedSites.some(site => url.includes(site));
+      
+      if (!isJobSite) {
+        console.warn('User is on a non-standard job site:', url);
+        // We'll still try, but give a helpful message
       }
       
-      console.log('Injecting content script...');
+      console.log('Attempting to inject content script with activeTab permission...');
       
-      // Inject content script to extract page data
+      // Use activeTab permission to inject script - this should work on any HTTPS page
       let results;
       try {
         results = await chrome.scripting.executeScript({
           target: { tabId: tab.id },
           func: () => {
-            console.log('Content script injected, extracting data...');
+            console.log('Content script injected successfully, extracting data...');
             
             // Function to extract job page data - injected directly
             const data = {
@@ -672,11 +680,34 @@ class SidePanelController {
         });
       } catch (scriptError) {
         console.error('Script injection failed:', scriptError);
-        throw new Error(`Failed to inject content script: ${scriptError.message}`);
+        
+        // Provide specific error messages based on the error type
+        if (scriptError.message.includes('Cannot access contents of') || 
+            scriptError.message.includes('Cannot access a chrome-extension://') ||
+            scriptError.message.includes('Cannot access a chrome://')) {
+          throw new Error('Cannot access this page due to browser security restrictions. Please try on a regular webpage (not chrome:// or extension pages).');
+        } 
+        
+        if (scriptError.message.includes('The tab was closed') || 
+            scriptError.message.includes('No tab with id')) {
+          throw new Error('The current tab is no longer available. Please refresh the page and try again.');
+        }
+        
+        if (url.includes('google.com/search') || url.includes('bing.com/search')) {
+          throw new Error('Search results pages are not supported. Please navigate to a specific job posting page and try again.');
+        }
+        
+        // Check if it's a supported site but might have CSP restrictions
+        const isJobSite = supportedSites.some(site => url.includes(site));
+        if (isJobSite) {
+          throw new Error('This job site has security restrictions that prevent content extraction. Try manually filling the form or contact support.');
+        }
+        
+        throw new Error(`Unable to access this page. AI Magic works best on job posting pages from major job boards. Error: ${scriptError.message}`);
       }
       
       if (!results || !results[0]) {
-        throw new Error('Content script execution failed - no results returned');
+        throw new Error('Content script execution failed - no results returned. The page may have security restrictions.');
       }
       
       const pageData = results[0].result;
