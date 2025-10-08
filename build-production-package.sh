@@ -29,6 +29,7 @@ cp background.js "$PRODUCTION_DIR/"
 cp content.js "$PRODUCTION_DIR/"
 cp sidepanel.html "$PRODUCTION_DIR/"
 cp popup.html "$PRODUCTION_DIR/"
+cp history.html "$PRODUCTION_DIR/"
 
 # Copy JavaScript files from js/ directory
 cp js/sidepanel.js "$PRODUCTION_DIR/"

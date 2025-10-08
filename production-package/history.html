@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Recruiter - Application History</title>
+    <link rel="stylesheet" href="css/history.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <span class="logo-icon">📋</span>
+                    <h1>Personal Recruiter - Application History</h1>
+                </div>
+                <div class="header-actions">
+                    <button id="exportBtn" class="btn primary">
+                        <span class="icon">📥</span>
+                        Export CSV
+                    </button>
+                    <button id="addApplicationBtn" class="btn secondary">
+                        <span class="icon">➕</span>
+                        Add Application
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Stats Section -->
+        <section class="stats-section">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">📊</div>
+                    <div class="stat-content">
+                        <div class="stat-number" id="totalCount">0</div>
+                        <div class="stat-label">Total Applications</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📅</div>
+                    <div class="stat-content">
+                        <div class="stat-number" id="thisMonthCount">0</div>
+                        <div class="stat-label">This Month</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📈</div>
+                    <div class="stat-content">
+                        <div class="stat-number" id="responseRate">0%</div>
+                        <div class="stat-label">Response Rate</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">💼</div>
+                    <div class="stat-content">
+                        <div class="stat-number" id="interviewCount">0</div>
+                        <div class="stat-label">Interviews</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Filters Section -->
+        <section class="filters-section">
+            <div class="filters-content">
+                <div class="filter-group">
+                    <label for="statusFilter">Status:</label>
+                    <select id="statusFilter">
+                        <option value="">All Statuses</option>
+                        <option value="Applied">Applied</option>
+                        <option value="In Review">In Review</option>
+                        <option value="Interview Scheduled">Interview Scheduled</option>
+                        <option value="Rejected">Rejected</option>
+                        <option value="Offer Received">Offer Received</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="dateFilter">Date Range:</label>
+                    <select id="dateFilter">
+                        <option value="">All Time</option>
+                        <option value="week">Last Week</option>
+                        <option value="month">Last Month</option>
+                        <option value="quarter">Last 3 Months</option>
+                        <option value="year">Last Year</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="searchFilter">Search:</label>
+                    <input type="text" id="searchFilter" placeholder="Job title, company, or keywords...">
+                </div>
+                <button id="clearFilters" class="btn tertiary">Clear Filters</button>
+            </div>
+        </section>
+
+        <!-- Applications Table -->
+        <section class="applications-section">
+            <div class="table-container">
+                <table class="applications-table" id="applicationsTable">
+                    <thead>
+                        <tr>
+                            <th class="sortable" data-sort="timestamp">
+                                Date Applied 
+                                <span class="sort-icon">↕️</span>
+                            </th>
+                            <th class="sortable" data-sort="jobTitle">
+                                Job Title 
+                                <span class="sort-icon">↕️</span>
+                            </th>
+                            <th class="sortable" data-sort="company">
+                                Company 
+                                <span class="sort-icon">↕️</span>
+                            </th>
+                            <th class="sortable" data-sort="status">
+                                Status 
+                                <span class="sort-icon">↕️</span>
+                            </th>
+                            <th>Job ID</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="applicationsBody">
+                        <!-- Applications will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="no-results" id="noResults" style="display: none;">
+                <div class="no-results-content">
+                    <div class="no-results-icon">🔍</div>
+                    <h3>No applications found</h3>
+                    <p>Try adjusting your filters or add a new application.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Pagination -->
+        <section class="pagination-section" id="paginationSection" style="display: none;">
+            <div class="pagination-content">
+                <button id="prevPage" class="pagination-btn">← Previous</button>
+                <div class="pagination-info">
+                    <span id="pageInfo">Page 1 of 1</span>
+                </div>
+                <button id="nextPage" class="pagination-btn">Next →</button>
+            </div>
+        </section>
+    </div>
+
+    <!-- Edit Application Modal -->
+    <div id="editModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Application</h3>
+                <span class="close" id="closeEditModal">&times;</span>
+            </div>
+            <form id="editForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editJobTitle">Job Title *</label>
+                        <input type="text" id="editJobTitle" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editCompany">Company *</label>
+                        <input type="text" id="editCompany" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editStatus">Status</label>
+                        <select id="editStatus">
+                            <option value="Applied">Applied</option>
+                            <option value="In Review">In Review</option>
+                            <option value="Interview Scheduled">Interview Scheduled</option>
+                            <option value="Rejected">Rejected</option>
+                            <option value="Offer Received">Offer Received</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="editJobId">Job ID</label>
+                        <input type="text" id="editJobId">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="editUrl">Job URL</label>
+                    <input type="url" id="editUrl">
+                </div>
+                <div class="form-group">
+                    <label for="editNotes">Notes</label>
+                    <textarea id="editNotes" rows="3"></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" id="cancelEdit" class="btn secondary">Cancel</button>
+                    <button type="submit" class="btn primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Application Modal -->
+    <div id="addModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add New Application</h3>
+                <span class="close" id="closeAddModal">&times;</span>
+            </div>
+            <form id="addForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="addJobTitle">Job Title *</label>
+                        <input type="text" id="addJobTitle" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="addCompany">Company *</label>
+                        <input type="text" id="addCompany" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="addStatus">Status</label>
+                        <select id="addStatus">
+                            <option value="Applied">Applied</option>
+                            <option value="In Review">In Review</option>
+                            <option value="Interview Scheduled">Interview Scheduled</option>
+                            <option value="Rejected">Rejected</option>
+                            <option value="Offer Received">Offer Received</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="addJobId">Job ID</label>
+                        <input type="text" id="addJobId">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="addUrl">Job URL</label>
+                    <input type="url" id="addUrl">
+                </div>
+                <div class="form-group">
+                    <label for="addNotes">Notes</label>
+                    <textarea id="addNotes" rows="3"></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" id="cancelAdd" class="btn secondary">Cancel</button>
+                    <button type="submit" class="btn primary">Add Application</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+        <div class="spinner"></div>
+    </div>
+
+    <script src="js/history.js"></script>
+</body>
+</html>
