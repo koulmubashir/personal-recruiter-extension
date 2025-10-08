@@ -177,6 +177,21 @@ class SidePanelController {
         'flexjobs.com',
         'angel.co',
         'wellfound.com',
+        'microsoft.com/careers',
+        'careers.microsoft.com',
+        'jobs.careers.microsoft.com',
+        'amazon.jobs',
+        'careers.amazon.com',
+        'google.com/careers',
+        'careers.google.com',
+        'apple.com/careers',
+        'careers.apple.com',
+        'meta.com/careers',
+        'careers.facebook.com',
+        'netflix.jobs',
+        'careers.netflix.com',
+        'tesla.com/careers',
+        'careers.tesla.com',
         '/careers',
         '/jobs',
         '/employment',
@@ -557,7 +572,11 @@ class SidePanelController {
       const supportedSites = [
         'linkedin.com', 'indeed.com', 'glassdoor.com', 'monster.com', 
         'ziprecruiter.com', 'careerbuilder.com', 'dice.com', 'stackoverflow.com',
-        'remote.co', 'weworkremotely.com', 'flexjobs.com', 'angel.co', 'wellfound.com'
+        'remote.co', 'weworkremotely.com', 'flexjobs.com', 'angel.co', 'wellfound.com',
+        'microsoft.com/careers', 'careers.microsoft.com', 'jobs.careers.microsoft.com',
+        'amazon.jobs', 'careers.amazon.com', 'google.com/careers', 'careers.google.com',
+        'apple.com/careers', 'careers.apple.com', 'meta.com/careers', 'careers.facebook.com',
+        'netflix.jobs', 'careers.netflix.com', 'tesla.com/careers', 'careers.tesla.com'
       ];
       
       const isJobSite = supportedSites.some(site => url.includes(site));
@@ -570,49 +589,11 @@ class SidePanelController {
       console.log('Attempting to inject content script with activeTab permission...');
       console.log('Tab details:', { id: tab.id, url: tab.url, title: tab.title });
       
-      // First, try a simple test injection to check if we can access the page
-      let canAccess = false;
-      try {
-        await chrome.scripting.executeScript({
-          target: { tabId: tab.id },
-          func: () => {
-            return {
-              canAccess: true,
-              url: window.location.href,
-              title: document.title,
-              hasBody: !!document.body
-            };
-          }
-        });
-        canAccess = true;
-        console.log('✅ Basic access test passed');
-      } catch (testError) {
-        console.error('❌ Basic access test failed:', testError);
-        
-        // Check for specific error types and provide helpful messages
-        const errorMsg = testError.message.toLowerCase();
-        
-        if (errorMsg.includes('cannot access contents of url') || 
-            errorMsg.includes('cannot access a chrome://') ||
-            errorMsg.includes('cannot access a chrome-extension://')) {
-          throw new Error('This page cannot be accessed due to browser security restrictions. Try a regular website like LinkedIn, Indeed, or a company careers page.');
-        }
-        
-        if (errorMsg.includes('no tab with id') || errorMsg.includes('tab was closed')) {
-          throw new Error('The tab is no longer available. Please refresh the page and try again.');
-        }
-        
-        if (errorMsg.includes('the script source is not available')) {
-          throw new Error('Script injection blocked. This page may have strict security policies. Try manually filling the form.');
-        }
-        
-        // For any other error, provide a general but helpful message
-        throw new Error(`Cannot access this page (${errorMsg}). AI Magic works best on job posting pages from major job boards. Try LinkedIn, Indeed, or company career pages.`);
-      }
-      
-      // If basic access works, try the full data extraction
+      // Go directly to content extraction with fallback handling
+      // No pre-test needed since we'll handle failures gracefully
       let results;
       try {
+        console.log('Attempting full content extraction...');
         results = await chrome.scripting.executeScript({
           target: { tabId: tab.id },
           func: () => {

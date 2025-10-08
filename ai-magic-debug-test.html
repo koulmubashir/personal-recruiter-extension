@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Magic Debug Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 10px; border: 1px solid #ccc; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #cce7f0; border-color: #b8daff; }
+    </style>
+</head>
+<body>
+    <h1>AI Magic Debug Test</h1>
+    <p>Use this page to test AI Magic functionality and debug issues.</p>
+    
+    <div class="test-section info">
+        <h3>Test Instructions:</h3>
+        <ol>
+            <li>Open this page in Chrome</li>
+            <li>Open Personal Recruiter extension side panel</li>
+            <li>Try clicking AI Magic button</li>
+            <li>Check browser console for detailed error messages</li>
+        </ol>
+    </div>
+    
+    <div class="test-section">
+        <h3>Sample Job Information:</h3>
+        <h1>Senior Software Engineer - Microsoft</h1>
+        <h2>Microsoft Corporation</h2>
+        <p><strong>Location:</strong> Redmond, WA</p>
+        <p><strong>Job ID:</strong> 1884187</p>
+        
+        <h3>Job Description:</h3>
+        <p>We are looking for a Senior Software Engineer to join our team and help build the future of cloud computing. You will work on cutting-edge technologies and collaborate with talented engineers worldwide.</p>
+        
+        <h4>Requirements:</h4>
+        <ul>
+            <li>5+ years of software development experience</li>
+            <li>Experience with C#, .NET, or similar technologies</li>
+            <li>Strong problem-solving skills</li>
+            <li>Bachelor's degree in Computer Science or related field</li>
+        </ul>
+        
+        <h4>Benefits:</h4>
+        <ul>
+            <li>Competitive salary and benefits</li>
+            <li>Health, dental, and vision insurance</li>
+            <li>401(k) matching</li>
+            <li>Flexible work arrangements</li>
+        </ul>
+        
+        <p><strong>Apply now to join the Microsoft team!</strong></p>
+    </div>
+    
+    <div class="test-section info">
+        <h3>Expected AI Magic Behavior:</h3>
+        <ul>
+            <li>Should extract job title: "Senior Software Engineer - Microsoft"</li>
+            <li>Should extract company: "Microsoft Corporation" or "Microsoft"</li>
+            <li>Should fill URL with current page URL</li>
+            <li>Should extract some job details for notes</li>
+        </ul>
+    </div>
+    
+    <script>
+        // Add some structured data for testing
+        const jobPosting = {
+            "@context": "https://schema.org",
+            "@type": "JobPosting",
+            "title": "Senior Software Engineer",
+            "description": "We are looking for a Senior Software Engineer to join our team...",
+            "hiringOrganization": {
+                "@type": "Organization",
+                "name": "Microsoft Corporation"
+            },
+            "jobLocation": {
+                "@type": "Place",
+                "address": "Redmond, WA"
+            },
+            "identifier": "1884187"
+        };
+        
+        // Add JSON-LD to page
+        const script = document.createElement('script');
+        script.type = 'application/ld+json';
+        script.textContent = JSON.stringify(jobPosting);
+        document.head.appendChild(script);
+        
+        // Add some meta tags
+        const metaTitle = document.createElement('meta');
+        metaTitle.setAttribute('property', 'og:title');
+        metaTitle.setAttribute('content', 'Senior Software Engineer - Microsoft');
+        document.head.appendChild(metaTitle);
+        
+        console.log('Debug test page loaded');
+        console.log('Structured data added:', jobPosting);
+    </script>
+</body>
+</html>
