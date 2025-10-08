@@ -568,8 +568,49 @@ class SidePanelController {
       }
       
       console.log('Attempting to inject content script with activeTab permission...');
+      console.log('Tab details:', { id: tab.id, url: tab.url, title: tab.title });
       
-      // Use activeTab permission to inject script - this should work on any HTTPS page
+      // First, try a simple test injection to check if we can access the page
+      let canAccess = false;
+      try {
+        await chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          func: () => {
+            return {
+              canAccess: true,
+              url: window.location.href,
+              title: document.title,
+              hasBody: !!document.body
+            };
+          }
+        });
+        canAccess = true;
+        console.log('✅ Basic access test passed');
+      } catch (testError) {
+        console.error('❌ Basic access test failed:', testError);
+        
+        // Check for specific error types and provide helpful messages
+        const errorMsg = testError.message.toLowerCase();
+        
+        if (errorMsg.includes('cannot access contents of url') || 
+            errorMsg.includes('cannot access a chrome://') ||
+            errorMsg.includes('cannot access a chrome-extension://')) {
+          throw new Error('This page cannot be accessed due to browser security restrictions. Try a regular website like LinkedIn, Indeed, or a company careers page.');
+        }
+        
+        if (errorMsg.includes('no tab with id') || errorMsg.includes('tab was closed')) {
+          throw new Error('The tab is no longer available. Please refresh the page and try again.');
+        }
+        
+        if (errorMsg.includes('the script source is not available')) {
+          throw new Error('Script injection blocked. This page may have strict security policies. Try manually filling the form.');
+        }
+        
+        // For any other error, provide a general but helpful message
+        throw new Error(`Cannot access this page (${errorMsg}). AI Magic works best on job posting pages from major job boards. Try LinkedIn, Indeed, or company career pages.`);
+      }
+      
+      // If basic access works, try the full data extraction
       let results;
       try {
         results = await chrome.scripting.executeScript({
@@ -679,17 +720,32 @@ class SidePanelController {
           }
         });
       } catch (scriptError) {
-        console.error('Script injection failed:', scriptError);
+        console.error('Full script injection failed:', scriptError);
         
-        // Provide specific error messages based on the error type
-        if (scriptError.message.includes('Cannot access contents of') || 
-            scriptError.message.includes('Cannot access a chrome-extension://') ||
-            scriptError.message.includes('Cannot access a chrome://')) {
+        // Try fallback method - extract what we can from tab information
+        console.log('Attempting fallback extraction from tab info...');
+        
+        try {
+          const fallbackData = this.extractFromTabInfo(tab);
+          const jobInfo = await this.parseJobDataWithAI(fallbackData, tab.url);
+          this.fillFormWithJobInfo(jobInfo);
+          this.showToast('✨ AI Magic completed using basic extraction! Some fields may need manual review.', 'success');
+          return; // Success with fallback
+        } catch (fallbackError) {
+          console.error('Fallback extraction also failed:', fallbackError);
+        }
+        
+        // If both methods fail, provide specific error messages
+        const errorMsg = scriptError.message.toLowerCase();
+        
+        if (errorMsg.includes('cannot access contents of') || 
+            errorMsg.includes('cannot access a chrome-extension://') ||
+            errorMsg.includes('cannot access a chrome://')) {
           throw new Error('Cannot access this page due to browser security restrictions. Please try on a regular webpage (not chrome:// or extension pages).');
         } 
         
-        if (scriptError.message.includes('The tab was closed') || 
-            scriptError.message.includes('No tab with id')) {
+        if (errorMsg.includes('the tab was closed') || 
+            errorMsg.includes('no tab with id')) {
           throw new Error('The current tab is no longer available. Please refresh the page and try again.');
         }
         
@@ -700,7 +756,19 @@ class SidePanelController {
         // Check if it's a supported site but might have CSP restrictions
         const isJobSite = supportedSites.some(site => url.includes(site));
         if (isJobSite) {
-          throw new Error('This job site has security restrictions that prevent content extraction. Try manually filling the form or contact support.');
+          // For known job sites, at least fill the URL and show a helpful message
+          try {
+            this.jobUrl.value = tab.url;
+            if (tab.title) {
+              // Try to extract job title from page title
+              this.jobTitle.value = tab.title.replace(/\s*\|\s*.+$/, '').replace(/\s*-\s*.+$/, '').trim();
+            }
+            this.showToast('⚠️ Security restrictions detected. URL and title filled - please complete other fields manually.', 'warning');
+            return; // Success with minimal filling
+          } catch (formError) {
+            console.error('Even basic form filling failed:', formError);
+          }
+          throw new Error('This job site has security restrictions that prevent content extraction. Please fill the form manually.');
         }
         
         throw new Error(`Unable to access this page. AI Magic works best on job posting pages from major job boards. Error: ${scriptError.message}`);
@@ -938,6 +1006,28 @@ class SidePanelController {
     }
     
     return jobInfo;
+  }
+
+  // Fallback method when script injection fails - extract what we can from tab info
+  extractFromTabInfo(tab) {
+    console.log('Using fallback extraction from tab:', { url: tab.url, title: tab.title });
+    
+    return {
+      title: tab.title || '',
+      url: tab.url || '',
+      text: tab.title || '', // Use title as text content
+      structured: {
+        metaTags: {},
+        jsonLd: [],
+        headings: [
+          {
+            tag: 'h1',
+            text: tab.title || ''
+          }
+        ],
+        links: []
+      }
+    };
   }
 
   fillFormWithJobInfo(jobInfo) {
