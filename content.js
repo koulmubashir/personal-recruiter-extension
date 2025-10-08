@@ -440,8 +440,10 @@ class JobDetector {
     // Create a subtle indicator that the job was detected
     const indicator = document.createElement('div');
     indicator.id = 'personal-recruiter-indicator';
-    indicator.innerHTML = `
-      <div style="
+    
+    // Create inner container safely
+    const innerDiv = document.createElement('div');
+    innerDiv.style.cssText = `
         position: fixed;
         top: 20px;
         right: 20px;
@@ -455,10 +457,11 @@ class JobDetector {
         opacity: 0.9;
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         pointer-events: none;
-      ">
-        📋 Job detected by Personal Recruiter
-      </div>
     `;
+    
+    // Safely set text content
+    innerDiv.textContent = '📋 Job detected by Personal Recruiter';
+    indicator.appendChild(innerDiv);
     
     document.body.appendChild(indicator);
     console.log('✅ Inline indicator added to page');
@@ -474,8 +477,10 @@ class JobDetector {
 
   showApplicationTrackedNotification() {
     const notification = document.createElement('div');
-    notification.innerHTML = `
-      <div style="
+    
+    // Create inner container safely
+    const innerDiv = document.createElement('div');
+    innerDiv.style.cssText = `
         position: fixed;
         top: 20px;
         right: 20px;
@@ -487,10 +492,11 @@ class JobDetector {
         z-index: 10000;
         box-shadow: 0 2px 8px rgba(0,0,0,0.2);
         opacity: 0.95;
-      ">
-        ✅ Job application tracked successfully!
-      </div>
     `;
+    
+    // Safely set text content
+    innerDiv.textContent = '✅ Job application tracked successfully!';
+    notification.appendChild(innerDiv);
     
     document.body.appendChild(notification);
     

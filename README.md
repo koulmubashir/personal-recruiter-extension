@@ -2,6 +2,17 @@
 
 A powerful Chrome browser extension that automatically tracks your job applications across various job boards and company career pages with Google account integration.
 
+## � Documentation
+
+**📖 [Complete Documentation](docs/index.md)** - Everything you need to know about Personal Recruiter
+
+### Quick Links
+- 🚀 **[Quick Start Guide](docs/setup/QUICK_START.md)** - Get started in 5 minutes
+- 👩‍💻 **[Contributing](docs/development/CONTRIBUTING.md)** - How to contribute to the project
+- 🔧 **[Troubleshooting](docs/troubleshooting/)** - Common issues and fixes
+- �🚀 **[Publishing Guide](docs/publishing/PUBLISHING_GUIDE.md)** - Chrome Web Store submission
+- ⚖️ **[Privacy Policy](docs/legal/PRIVACY_POLICY.md)** - Privacy and data protection
+
 ## 🚀 Features
 
 ### Core Functionality
@@ -47,6 +58,8 @@ The extension uses advanced algorithms to:
 3. Enable "Developer mode" in the top right
 4. Click "Load unpacked" and select the extension directory
 5. The extension should now appear in your extensions list
+
+**📖 [Detailed Setup Instructions](docs/setup/QUICK_START.md)**
 
 ## 🔧 Setup and Configuration
 

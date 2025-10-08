@@ -4,6 +4,9 @@ class PersonalRecruiter {
     // Set to false for real Google OAuth authentication
     this.useMockAuth = false; // REAL GOOGLE AUTH ENABLED
     
+    // Production logging control (set to false for production)
+    this.debugMode = false;
+    
     this.jobSites = [
       // Job boards
       'linkedin.com/jobs',
@@ -34,14 +37,25 @@ class PersonalRecruiter {
       '/work-with-us',
       '/hiring',
       '/positions',
-      '/openings'
     ];
     
     this.init();
   }
 
+  // Safe logging method for production
+  log(message, ...args) {
+    if (this.debugMode) {
+      console.log(`[PersonalRecruiter] ${message}`, ...args);
+    }
+  }
+
+  logError(message, ...args) {
+    // Always log errors, even in production
+    console.error(`[PersonalRecruiter ERROR] ${message}`, ...args);
+  }
+
   init() {
-    console.log('=== Personal Recruiter Background Script Initializing ===');
+    this.log('Background Script Initializing');
     
     // Set up listeners
     chrome.runtime.onInstalled.addListener(() => this.onInstalled());
@@ -52,9 +66,9 @@ class PersonalRecruiter {
     // Only add click listener if side panel doesn't auto-open
     chrome.action.onClicked.addListener(() => this.onActionClick());
     
-    console.log('✅ Event listeners set up');
-    console.log('Chrome version info:', navigator.userAgent);
-    console.log('SidePanel API available:', !!chrome.sidePanel);
+    this.log('Event listeners set up');
+    this.log('Chrome version info:', navigator.userAgent);
+    this.log('SidePanel API available:', !!chrome.sidePanel);
     
     // Check authentication status on startup
     this.checkAuthStatus();
@@ -279,9 +293,15 @@ class PersonalRecruiter {
             }
           });
         });
+        
+        // Validate token format for security
+        if (token && !this.validateOAuthToken(token)) {
+          throw new Error('Invalid OAuth token format received');
+        }
+        
       } catch (error) {
-        console.error('Token request failed:', error);
-        console.error('Error details:', {
+        this.logError('Token request failed:', error);
+        this.logError('Error details:', {
           message: error.message,
           stack: error.stack,
           name: error.name
@@ -469,18 +489,22 @@ class PersonalRecruiter {
   }
 
   async analyzePageForJobContent(tab) {
-    // Skip if background processing is disabled or tab is not ready
-    if (!tab.id || tab.id < 0) return;
-    
-    const { settings } = await chrome.storage.sync.get(['settings']);
-    
-    if (!settings?.autoDetection || !settings?.trackingEnabled) {
-      return;
-    }
+    try {
+      // Skip if background processing is disabled or tab is not ready
+      if (!tab.id || tab.id < 0) return;
+      
+      const { settings } = await chrome.storage.sync.get(['settings']);
+      
+      if (!settings?.autoDetection || !settings?.trackingEnabled) {
+        return;
+      }
 
-    // Content script is now injected via manifest for job-related URLs only
-    // No need to manually inject here anymore since we optimized the manifest
-    console.log('Job-related page detected:', tab.url);
+      // Content script is now injected via manifest for job-related URLs only
+      // No need to manually inject here anymore since we optimized the manifest
+      this.log('Job-related page detected:', tab.url);
+    } catch (error) {
+      this.logError('Failed to analyze page for job content:', error);
+    }
   }
 
   async saveJobApplication(applicationData) {
@@ -740,6 +764,17 @@ class PersonalRecruiter {
     } catch (error) {
       await chrome.storage.sync.set({ isAuthenticated: false });
     }
+  }
+
+  // OAuth token validation for security
+  validateOAuthToken(token) {
+    if (!token || typeof token !== 'string') {
+      return false;
+    }
+    
+    // Validate Google OAuth token format
+    const googleTokenPattern = /^ya29\.[a-zA-Z0-9\-_]+$/;
+    return googleTokenPattern.test(token);
   }
 }
 

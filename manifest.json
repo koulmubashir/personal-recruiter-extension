@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Personal Recruiter - Job Application Tracker",
-  "version": "1.0.1",
-  "description": "Track job applications across job boards and career pages with AI-powered automatic detection and Google account integration.",
+  "version": "1.0.2",
+  "description": "Track job applications across job boards and career sites. Automatically extract job details and organize progress.",
   "permissions": [
     "storage",
     "activeTab",
@@ -12,7 +12,28 @@
     "sidePanel"
   ],
   "host_permissions": [
-    "<all_urls>"
+    "*://linkedin.com/*",
+    "*://www.linkedin.com/*",
+    "*://indeed.com/*", 
+    "*://www.indeed.com/*",
+    "*://glassdoor.com/*",
+    "*://www.glassdoor.com/*",
+    "*://monster.com/*",
+    "*://www.monster.com/*",
+    "*://ziprecruiter.com/*",
+    "*://www.ziprecruiter.com/*",
+    "*://careerbuilder.com/*",
+    "*://www.careerbuilder.com/*",
+    "*://dice.com/*",
+    "*://www.dice.com/*",
+    "*://stackoverflow.com/*",
+    "*://remote.co/*",
+    "*://www.remote.co/*",
+    "*://weworkremotely.com/*",
+    "*://flexjobs.com/*",
+    "*://www.flexjobs.com/*",
+    "*://*/*careers*",
+    "*://*/*jobs*"
   ],
   "oauth2": {
     "client_id": "728714090261-hqhfnujmbl8s2cgbr65cqard6lnfksub.apps.googleusercontent.com",
@@ -80,20 +101,31 @@
   "web_accessible_resources": [
     {
       "resources": [
-        "popup.html",
-        "history.html",
-        "chrome-test.html",
-        "extension-test.html",
-        "oauth-setup-helper.html",
-        "test-auth.html",
-        "auth-toggle.html",
-        "test-suite.html",
-        "auth-debug-tool.html",
-        "ai-magic-test.html",
-        "GOOGLE_OAUTH_SETUP.md"
+        "history.html"
       ],
       "matches": [
-        "<all_urls>"
+        "*://linkedin.com/*",
+        "*://www.linkedin.com/*",
+        "*://indeed.com/*", 
+        "*://www.indeed.com/*",
+        "*://glassdoor.com/*",
+        "*://www.glassdoor.com/*",
+        "*://monster.com/*",
+        "*://www.monster.com/*",
+        "*://ziprecruiter.com/*",
+        "*://www.ziprecruiter.com/*",
+        "*://careerbuilder.com/*",
+        "*://www.careerbuilder.com/*",
+        "*://dice.com/*",
+        "*://www.dice.com/*",
+        "*://stackoverflow.com/*",
+        "*://remote.co/*",
+        "*://www.remote.co/*",
+        "*://weworkremotely.com/*",
+        "*://flexjobs.com/*",
+        "*://www.flexjobs.com/*",
+        "*://*/*careers*",
+        "*://*/*jobs*"
       ]
     }
   ]

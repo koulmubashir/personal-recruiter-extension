@@ -8,7 +8,19 @@
     "create-icons": "node scripts/create-icons.js",
     "package": "zip -r personal-recruiter-extension.zip . -x '*.git*' 'node_modules/*' 'scripts/*' 'package*.json' 'README.md'",
     "dev": "echo 'Load the extension in Chrome by going to chrome://extensions and enabling Developer mode, then click Load unpacked'",
-    "validate": "echo 'Validating manifest...' && node -e \"console.log('Manifest is valid:', !!require('./manifest.json'))\""
+    "validate": "echo 'Validating manifest...' && node -e \"console.log('Manifest is valid:', !!require('./manifest.json'))\"",
+    "test": "jest",
+    "test:unit": "jest --testPathPattern=tests/unit",
+    "test:integration": "jest --testPathPattern=tests/integration",
+    "test:e2e": "jest --testPathPattern=tests/e2e",
+    "test:performance": "node tests/performance/performance-test.js",
+    "test:security": "npm audit && node tests/security/security-test.js",
+    "test:accessibility": "node tests/accessibility/a11y-test.js",
+    "test:all": "npm run test:unit && npm run test:integration && npm run test:security",
+    "validate:manifest": "node tests/compliance/manifest-validator.js",
+    "test:compliance": "node tests/compliance/store-compliance.js",
+    "coverage": "jest --coverage",
+    "lint": "echo 'Running basic lint checks...' && node tests/quality/basic-lint.js"
   },
   "keywords": [
     "chrome-extension",
@@ -20,7 +32,21 @@
   "author": "Your Name",
   "license": "MIT",
   "devDependencies": {
-    "canvas": "^2.11.2"
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0"
+  },
+  "jest": {
+    "testEnvironment": "jsdom",
+    "setupFilesAfterEnv": ["<rootDir>/tests/setup.js"],
+    "collectCoverageFrom": [
+      "src/**/*.js",
+      "*.js",
+      "!tests/**",
+      "!node_modules/**",
+      "!scripts/**"
+    ],
+    "coverageReporters": ["text", "html"],
+    "testMatch": ["**/tests/**/*.test.js"]
   },
   "repository": {
     "type": "git",
