@@ -549,7 +549,14 @@ class PersonalRecruiter {
       ...applicationData
     };
     
+    let isDuplicate = false;
+    let existingApplication = null;
+    
     if (existingIndex !== -1) {
+      // Save reference to existing application for duplicate notification
+      existingApplication = { ...jobApplications[existingIndex] };
+      isDuplicate = true;
+      
       // Update existing application instead of creating duplicate
       jobApplications[existingIndex] = { ...jobApplications[existingIndex], ...newApplication };
       console.log('Updated existing application to prevent duplicate');
@@ -571,7 +578,11 @@ class PersonalRecruiter {
               reject(new Error('Storage quota exceeded. Please export your data and clear some applications.'));
             } else {
               console.log('✅ Application saved to local storage');
-              resolve(newApplication);
+              resolve({ 
+                application: newApplication, 
+                isDuplicate, 
+                existingApplication: existingApplication 
+              });
             }
           });
         } else {
@@ -579,7 +590,11 @@ class PersonalRecruiter {
         }
       } else {
         console.log(`✅ Application saved to ${storageType} storage. Total:`, jobApplications.length);
-        resolve(newApplication);
+        resolve({ 
+          application: newApplication, 
+          isDuplicate, 
+          existingApplication: existingApplication 
+        });
       }
     });
   }

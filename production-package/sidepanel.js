@@ -498,8 +498,28 @@ class SidePanelController {
       
       if (response && response.success) {
         console.log('✅ Application saved successfully');
+        
+        // Check if this was a duplicate job that was updated
+        if (response.data && response.data.isDuplicate && response.data.existingApplication) {
+          const existingApp = response.data.existingApplication;
+          const existingDate = new Date(existingApp.timestamp).toLocaleDateString();
+          
+          // Show inline warning message about duplicate job
+          this.showToast(
+            `⚠️ Job Already in History! This job "${existingApp.jobTitle}" at "${existingApp.company}" was already saved on ${existingDate}. The existing entry has been updated with your new information.`, 
+            'warning'
+          );
+          
+          console.log('Duplicate job detected and updated:', {
+            existing: existingApp,
+            new: response.data.application
+          });
+        } else {
+          // New job saved successfully
+          this.showSuccess('Application saved successfully!');
+        }
+        
         this.quickAddForm.reset();
-        this.showSuccess('Application saved successfully!');
         await this.loadApplications();
       } else {
         console.error('❌ Failed to save application:', response);
@@ -755,7 +775,7 @@ class SidePanelController {
         try {
           const fallbackData = this.extractFromTabInfo(tab);
           const jobInfo = await this.parseJobDataWithAI(fallbackData, tab.url);
-          this.fillFormWithJobInfo(jobInfo);
+          await this.fillFormWithJobInfo(jobInfo);
           this.showToast('✨ AI Magic completed using basic extraction! Some fields may need manual review.', 'success');
           return; // Success with fallback
         } catch (fallbackError) {
@@ -818,7 +838,7 @@ class SidePanelController {
       console.log('Parsed job info:', jobInfo);
       
       // Fill the form with parsed data
-      this.fillFormWithJobInfo(jobInfo);
+      await this.fillFormWithJobInfo(jobInfo);
       
       // Show success message
       this.showToast('✨ AI Magic completed! Form filled with extracted data.', 'success');
@@ -1057,7 +1077,45 @@ class SidePanelController {
     };
   }
 
-  fillFormWithJobInfo(jobInfo) {
+  async checkForDuplicateJob(jobInfo) {
+    // Check if a similar job already exists in user's history
+    if (!jobInfo.jobTitle || !jobInfo.company || !this.applications || this.applications.length === 0) {
+      return; // Not enough data to check or no existing applications
+    }
+    
+    // Look for exact matches first
+    const exactMatch = this.applications.find(app => 
+      app.jobTitle?.toLowerCase() === jobInfo.jobTitle.toLowerCase() && 
+      app.company?.toLowerCase() === jobInfo.company.toLowerCase() &&
+      app.url === jobInfo.url
+    );
+    
+    if (exactMatch) {
+      const existingDate = new Date(exactMatch.timestamp).toLocaleDateString();
+      this.showToast(
+        `⚠️ Duplicate Detected! This exact job "${exactMatch.jobTitle}" at "${exactMatch.company}" was already saved on ${existingDate}. If you save this, it will update the existing entry.`, 
+        'warning'
+      );
+      return;
+    }
+    
+    // Look for similar jobs (same title and company, different URL)
+    const similarMatch = this.applications.find(app => 
+      app.jobTitle?.toLowerCase() === jobInfo.jobTitle.toLowerCase() && 
+      app.company?.toLowerCase() === jobInfo.company.toLowerCase()
+    );
+    
+    if (similarMatch) {
+      const existingDate = new Date(similarMatch.timestamp).toLocaleDateString();
+      this.showToast(
+        `ℹ️ Similar Job Found: A job with the title "${similarMatch.jobTitle}" at "${similarMatch.company}" was already saved on ${existingDate}. Please verify this is a different position before saving.`, 
+        'info'
+      );
+      return;
+    }
+  }
+
+  async fillFormWithJobInfo(jobInfo) {
     console.log('Filling form with:', jobInfo);
     
     // Fill the form fields
@@ -1080,6 +1138,9 @@ class SidePanelController {
     if (jobInfo.notes) {
       this.notes.value = jobInfo.notes;
     }
+    
+    // Check for potential duplicates after filling the form
+    await this.checkForDuplicateJob(jobInfo);
     
     // Change save button to green if we have good data
     if (jobInfo.confidence > 0.3 || (jobInfo.jobTitle && jobInfo.company)) {
@@ -1372,7 +1433,23 @@ class SidePanelController {
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
     
-    const icon = type === 'success' ? '✅' : '❌';
+    let icon;
+    switch(type) {
+      case 'success':
+        icon = '✅';
+        break;
+      case 'error':
+        icon = '❌';
+        break;
+      case 'warning':
+        icon = '⚠️';
+        break;
+      case 'info':
+        icon = 'ℹ️';
+        break;
+      default:
+        icon = '✅';
+    }
     
     toast.innerHTML = `
       <span class="toast-icon">${icon}</span>
@@ -1385,7 +1462,8 @@ class SidePanelController {
     // Trigger animation
     setTimeout(() => toast.classList.add('show'), 10);
     
-    // Auto-remove after 3 seconds
+    // Auto-remove after different durations based on type
+    const duration = type === 'warning' ? 5000 : 3000; // Warning messages stay longer
     setTimeout(() => {
       toast.classList.remove('show');
       setTimeout(() => {
@@ -1393,7 +1471,7 @@ class SidePanelController {
           toast.remove();
         }
       }, 300);
-    }, 3000);
+    }, duration);
   }
 
   sendMessage(message) {
