@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Recruiter - Side Panel</title>
+    <link rel="stylesheet" href="css/sidepanel.css">
+</head>
+<body>
+    <div class="sidepanel-container">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo">
+                <img src="icons/icon32.png" alt="Personal Recruiter" class="logo-icon-img">
+                <span class="logo-text">Personal Recruiter</span>
+            </div>
+        </div>
+
+        <!-- User Section -->
+        <div class="user-section" id="userSection" style="display: none;">
+            <div class="user-info">
+                <div class="user-avatar-container">
+                    <img id="userAvatar" class="user-avatar" src="" alt="User">
+                    <div class="google-badge" title="Authenticated with Google">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="user-details">
+                    <div class="user-name-container">
+                        <span id="userName" class="user-name"></span>
+                        <span id="userEmail" class="user-email"></span>
+                    </div>
+                    <button id="logoutBtn" class="logout-btn">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                            <polyline points="16,17 21,12 16,7"/>
+                            <line x1="21" y1="12" x2="9" y2="12"/>
+                        </svg>
+                        Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Authentication Section -->
+        <div class="auth-section" id="authSection">
+            <div class="auth-content">
+                <h2>Welcome!</h2>
+                <p>Sign in to start tracking your job applications automatically.</p>
+                <button id="loginBtn" class="login-btn">
+                    <svg class="google-icon" width="18" height="18" viewBox="0 0 24 24" fill="none">
+                        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                    </svg>
+                    Sign in with Google
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content" id="mainContent" style="display: none;">
+            <!-- Quick Stats -->
+            <div class="stats-section">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalApplications">0</div>
+                        <div class="stat-label">Total</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="thisWeekApplications">0</div>
+                        <div class="stat-label">This Week</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation Tabs -->
+            <div class="tabs-section">
+                <div class="tabs">
+                    <button class="tab-btn active" data-tab="quick">Quick Add</button>
+                    <button class="tab-btn" data-tab="recent">Recent</button>
+                    <button class="tab-btn" data-tab="history">History</button>
+                </div>
+            </div>
+
+            <!-- Tab Content -->
+            <div class="tab-content">
+                <!-- Quick Add Tab -->
+                <div class="tab-panel active" id="quickTab">
+                    <div class="quick-add-section">
+                        <h3>Add Application</h3>
+                        <form id="quickAddForm">
+                            <div class="form-group">
+                                <label for="jobTitle">Job Title *</label>
+                                <input type="text" id="jobTitle" required placeholder="e.g. Senior Developer">
+                            </div>
+                            <div class="form-group">
+                                <label for="company">Company *</label>
+                                <input type="text" id="company" required placeholder="e.g. Google">
+                            </div>
+                            <div class="form-group">
+                                <label for="jobUrl">Job URL</label>
+                                <input type="url" id="jobUrl" placeholder="https://...">
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="status">Status</label>
+                                    <select id="status">
+                                        <option value="Applied">Applied</option>
+                                        <option value="In Review">In Review</option>
+                                        <option value="Interview Scheduled">Interview Scheduled</option>
+                                        <option value="Rejected">Rejected</option>
+                                        <option value="Offer Received">Offer Received</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="jobId">Job ID</label>
+                                    <input type="text" id="jobId" placeholder="REQ123">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="notes">Notes</label>
+                                <textarea id="notes" rows="2" placeholder="Optional notes..."></textarea>
+                            </div>
+                            
+                            <!-- AI Magic Button -->
+                            <button type="button" id="aiMagicBtn" class="btn secondary full-width ai-magic-btn">
+                                <span class="btn-icon">🪄</span>
+                                AI Magic - Auto Fill from Page
+                            </button>
+                            
+                            <button type="submit" class="btn primary full-width" id="saveApplicationBtn">
+                                <span class="btn-icon">➕</span>
+                                Save Application
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Recent Tab -->
+                <div class="tab-panel" id="recentTab">
+                    <div class="recent-section">
+                        <h3>Recent Applications</h3>
+                        <div id="recentApplications" class="recent-list">
+                            <!-- Recent applications will be loaded here -->
+                        </div>
+                        <div class="no-applications" id="noApplications" style="display: none;">
+                            <div class="empty-state">
+                                <img src="icons/icon48.png" alt="No applications" class="empty-icon-img">
+                                <p>No applications yet</p>
+                                <small>Start browsing job sites!</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- History Tab -->
+                <div class="tab-panel" id="historyTab">
+                    <div class="history-section">
+                        <div class="history-header">
+                            <h3>Application History</h3>
+                            <button id="exportBtn" class="btn secondary small">
+                                <span class="btn-icon">📥</span>
+                                Export
+                            </button>
+                        </div>
+                        <div class="history-filters">
+                            <select id="statusFilter">
+                                <option value="">All Status</option>
+                                <option value="Applied">Applied</option>
+                                <option value="In Review">In Review</option>
+                                <option value="Interview Scheduled">Interview</option>
+                                <option value="Rejected">Rejected</option>
+                                <option value="Offer Received">Offer</option>
+                            </select>
+                            <select id="timeFilter">
+                                <option value="">All Time</option>
+                                <option value="week">Last Week</option>
+                                <option value="month">Last Month</option>
+                                <option value="quarter">Last 3 Months</option>
+                            </select>
+                        </div>
+                        <div id="historyApplications" class="history-list">
+                            <!-- History applications will be loaded here -->
+                        </div>
+                        <button id="viewFullHistoryBtn" class="btn secondary full-width">
+                            View Full History Page
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Section -->
+            <div class="settings-section">
+                <h4>Settings</h4>
+                <div class="setting-item">
+                    <label class="setting-label">
+                        <input type="checkbox" id="autoDetectionToggle" checked>
+                        <span class="checkmark"></span>
+                        Auto-detect applications
+                    </label>
+                </div>
+                <div class="setting-item">
+                    <label class="setting-label">
+                        <input type="checkbox" id="notificationsToggle" checked>
+                        <span class="checkmark"></span>
+                        Show notifications
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+            <div class="spinner"></div>
+        </div>
+
+        <!-- Toast Notifications -->
+        <div id="toastContainer" class="toast-container"></div>
+        
+        <!-- Job Details Modal -->
+        <div id="jobDetailsModal" class="modal-overlay" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 id="modalJobTitle">Job Title</h3>
+                    <button id="closeModal" class="close-btn">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="job-detail-section">
+                        <div class="detail-row">
+                            <label>Company:</label>
+                            <span id="modalCompany">Company Name</span>
+                        </div>
+                        <div class="detail-row">
+                            <label>Status:</label>
+                            <span id="modalStatus" class="status-badge">Applied</span>
+                        </div>
+                        <div class="detail-row">
+                            <label>Job ID:</label>
+                            <span id="modalJobId">-</span>
+                        </div>
+                        <div class="detail-row">
+                            <label>Applied Date:</label>
+                            <span id="modalAppliedDate">Date</span>
+                        </div>
+                        <div class="detail-row">
+                            <label>Job URL:</label>
+                            <div class="url-container">
+                                <a id="modalJobUrl" href="#" target="_blank" class="job-url">View Original Posting</a>
+                            </div>
+                        </div>
+                        <div class="detail-row full-width">
+                            <label>Notes:</label>
+                            <div id="modalNotes" class="notes-content">No notes available</div>
+                        </div>
+                    </div>
+                    <div class="modal-actions">
+                        <button id="editJobBtn" class="btn primary">
+                            <span class="btn-icon">✏️</span>
+                            Edit Application
+                        </button>
+                        <button id="deleteJobBtn" class="btn secondary">
+                            <span class="btn-icon">🗑️</span>
+                            Delete
+                        </button>
+                        <button id="updateStatusBtn" class="btn secondary">
+                            <span class="btn-icon">🔄</span>
+                            Update Status
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/sidepanel.js"></script>
+</body>
+</html>

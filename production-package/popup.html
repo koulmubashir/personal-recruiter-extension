@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Recruiter</title>
+    <link rel="stylesheet" href="css/popup.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo">
+                <span class="logo-icon">📋</span>
+                <span class="logo-text">Personal Recruiter</span>
+            </div>
+            <div class="user-section" id="userSection" style="display: none;">
+                <img id="userAvatar" class="user-avatar" src="" alt="User">
+                <span id="userName" class="user-name"></span>
+                <button id="logoutBtn" class="logout-btn">Logout</button>
+            </div>
+        </div>
+
+        <!-- Authentication Section -->
+        <div class="auth-section" id="authSection">
+            <div class="auth-content">
+                <h2>Welcome to Personal Recruiter</h2>
+                <p>Track your job applications automatically across all job boards and company career pages.</p>
+                <button id="loginBtn" class="login-btn">
+                    <span class="google-icon">🔍</span>
+                    Sign in with Google
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content" id="mainContent" style="display: none;">
+            <!-- Quick Stats -->
+            <div class="stats-section">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalApplications">0</div>
+                    <div class="stat-label">Total Applications</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="thisWeekApplications">0</div>
+                    <div class="stat-label">This Week</div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="actions-section">
+                <button id="manualAddBtn" class="action-btn primary">
+                    <span class="btn-icon">➕</span>
+                    Add Job Application
+                </button>
+                <button id="historyBtn" class="action-btn secondary">
+                    <span class="btn-icon">📊</span>
+                    View History
+                </button>
+                <button id="exportBtn" class="action-btn secondary">
+                    <span class="btn-icon">📥</span>
+                    Export CSV
+                </button>
+            </div>
+
+            <!-- Recent Applications -->
+            <div class="recent-section">
+                <h3>Recent Applications</h3>
+                <div id="recentApplications" class="recent-list">
+                    <!-- Recent applications will be loaded here -->
+                </div>
+                <div class="no-applications" id="noApplications" style="display: none;">
+                    <p>No applications tracked yet.</p>
+                    <p>Start browsing job sites and the extension will automatically detect when you apply!</p>
+                </div>
+            </div>
+
+            <!-- Settings Toggle -->
+            <div class="settings-section">
+                <div class="setting-item">
+                    <label class="setting-label">
+                        <input type="checkbox" id="autoDetectionToggle" checked>
+                        <span class="checkmark"></span>
+                        Auto-detect job applications
+                    </label>
+                </div>
+                <div class="setting-item">
+                    <label class="setting-label">
+                        <input type="checkbox" id="notificationsToggle" checked>
+                        <span class="checkmark"></span>
+                        Show notifications
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Manual Add Modal -->
+        <div id="manualAddModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Add Job Application</h3>
+                    <span class="close" id="closeModal">&times;</span>
+                </div>
+                <form id="manualAddForm">
+                    <div class="form-group">
+                        <label for="jobTitle">Job Title *</label>
+                        <input type="text" id="jobTitle" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="company">Company *</label>
+                        <input type="text" id="company" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="jobUrl">Job URL</label>
+                        <input type="url" id="jobUrl">
+                    </div>
+                    <div class="form-group">
+                        <label for="jobId">Job ID</label>
+                        <input type="text" id="jobId">
+                    </div>
+                    <div class="form-group">
+                        <label for="status">Status</label>
+                        <select id="status">
+                            <option value="Applied">Applied</option>
+                            <option value="In Review">In Review</option>
+                            <option value="Interview Scheduled">Interview Scheduled</option>
+                            <option value="Rejected">Rejected</option>
+                            <option value="Offer Received">Offer Received</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="notes">Notes</label>
+                        <textarea id="notes" rows="3"></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" id="cancelAdd" class="btn secondary">Cancel</button>
+                        <button type="submit" class="btn primary">Save Application</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+            <div class="spinner"></div>
+        </div>
+    </div>
+
+    <script src="js/popup.js"></script>
+</body>
+</html>
