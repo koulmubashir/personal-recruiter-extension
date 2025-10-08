@@ -96,6 +96,11 @@ class SidePanelController {
     });
     this.status.addEventListener('change', () => this.resetSaveButtonStyle());
 
+    // Update AI Magic button state when URL field changes
+    this.jobUrl.addEventListener('input', () => {
+      setTimeout(() => this.updateAIMagicButtonState(), 100);
+    });
+
     // Action buttons
     this.exportBtn.addEventListener('click', () => this.exportApplications());
     this.viewFullHistoryBtn.addEventListener('click', () => this.openFullHistory());
@@ -203,11 +208,23 @@ class SidePanelController {
       const title = tab.title?.toLowerCase() || '';
       const hasJobKeywords = title.includes('job') || title.includes('career') || title.includes('position');
 
+      // Check if form is already filled with current page data
+      const currentJobUrl = this.jobUrl?.value?.trim();
+      const isFormFilled = currentJobUrl && currentJobUrl === tab.url;
+
       // Enable AI Magic for all regular web pages (activeTab permission allows this)
       if (isJobRelated || hasJobKeywords) {
-        this.setAIMagicButtonState(true, '🪄 AI Magic - Auto Fill from Job Page');
+        if (isFormFilled) {
+          this.setAIMagicButtonState(true, '🔄 AI Magic - Refresh Data from Job Page');
+        } else {
+          this.setAIMagicButtonState(true, '🪄 AI Magic - Auto Fill from Job Page');
+        }
       } else if (url.startsWith('https://') || url.startsWith('http://')) {
-        this.setAIMagicButtonState(true, '🪄 AI Magic - Extract from Current Page');
+        if (isFormFilled) {
+          this.setAIMagicButtonState(true, '🔄 AI Magic - Refresh Data from Current Page');
+        } else {
+          this.setAIMagicButtonState(true, '🪄 AI Magic - Extract from Current Page');
+        }
       } else {
         this.setAIMagicButtonState(false, '🪄 AI Magic - Unsupported page type');
       }
@@ -529,6 +546,35 @@ class SidePanelController {
 
   async runAIMagic() {
     console.log('=== Running AI Magic ===');
+    
+    // Check if form is already filled to prevent duplicate runs
+    const currentJobUrl = this.jobUrl?.value?.trim();
+    const currentJobTitle = this.jobTitle?.value?.trim();
+    
+    // Get current tab to compare with filled URL
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    
+    if (currentJobUrl && currentJobTitle && tab?.url && currentJobUrl === tab.url) {
+      console.log('Form already filled with current page data, asking user for confirmation');
+      
+      // Show confirmation instead of running again
+      const shouldRefresh = confirm(
+        'This form appears to already be filled with data from the current page.\n\n' +
+        'Do you want to refresh the data? This will overwrite current form values.\n\n' +
+        'Click OK to refresh, or Cancel to keep current data.'
+      );
+      
+      if (!shouldRefresh) {
+        console.log('User chose to keep current data');
+        this.showToast('✅ Keeping current form data. Edit manually if needed.', 'info');
+        // Reset button state before returning
+        this.aiMagicBtn.classList.remove('loading');
+        await this.updateAIMagicButtonState();
+        return;
+      }
+      
+      console.log('User chose to refresh data, proceeding with AI Magic...');
+    }
     
     // Update button to loading state
     this.aiMagicBtn.textContent = '🔮 Analyzing Page...';
