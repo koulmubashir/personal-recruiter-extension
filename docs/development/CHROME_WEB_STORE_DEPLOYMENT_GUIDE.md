@@ -180,7 +180,7 @@ Transform your job search from chaos to organized success with Personal Recruite
 ### If Review is Rejected
 1. Check developer console for specific feedback
 2. Address issues in source code
-3. Rebuild package with `./build-production-package.sh`
+3. Rebuild package with `./tools/scripts/build-production-package.sh`
 4. Resubmit updated package
 
 ## ✅ Final Checklist
