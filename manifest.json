@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Personal Recruiter - Job Application Tracker",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Track job applications across job boards and career sites. Automatically extract job details and organize progress.",
   "permissions": [
     "storage",

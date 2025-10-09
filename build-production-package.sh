@@ -8,7 +8,7 @@ echo "=============================================================="
 
 # Set production directory
 PRODUCTION_DIR="production-package"
-PACKAGE_NAME="personal-recruiter-extension-v1.0.3-production"
+PACKAGE_NAME="personal-recruiter-extension-v1.0.4-production"
 
 # Clean any existing production directory
 if [ -d "$PRODUCTION_DIR" ]; then

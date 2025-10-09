@@ -1,6 +1,6 @@
 {
   "name": "personal-recruiter-extension",
-  "version": "1.0.0",
+  "version": "1.0.4",
   "description": "Chrome extension for tracking job applications with automatic detection and Google authentication",
   "main": "background.js",
   "scripts": {
